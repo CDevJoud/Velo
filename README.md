@@ -1,4 +1,8 @@
-# Velo
+<h1 align="center">Velo</h1>
+
+<p align="center">
+  <img src="logo.webp" width="400">
+</p>
 
 **Velo** is a next-generation Minecraft: Legacy Console Edition server software written in modern C++, focused on raw performance, low memory usage, and clean architecture.
 
