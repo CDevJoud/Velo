@@ -4,7 +4,7 @@
       <h1>Velo</h1>
     </td>
     <td width="40%" align="right">
-      <img src="logo.webp" width="220">
+      <img src="logo.webp" width="420">
     </td>
   </tr>
 </table>
