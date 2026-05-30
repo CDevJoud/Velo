@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Socket.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="TCPClient.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="TCPServer.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Network">
+      <UniqueIdentifier>{716f94c9-19c5-415d-be4a-6371885b8b6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{a2930cef-6b5c-459d-b3c0-b5083cc1a0fe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NonCopyable.hpp">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Socket.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="typedefs.hpp">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="TCPClient.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="TCPServer.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
