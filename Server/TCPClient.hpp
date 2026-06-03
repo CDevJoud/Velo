@@ -18,7 +18,7 @@ namespace velo {
 		void disconnect();
 
 		Status send(const void* data, Qword size, Qword& sent);
-
+		Status send(const Packet& p);
 		Status receive(void* data, Qword sizem, Qword& received);
 
 		Status receive(Packet& p);
