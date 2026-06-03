@@ -125,19 +125,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="LCEServer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Packet.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PlayerInterface.cpp" />
+    <ClCompile Include="QEventBus.cpp" />
+    <ClCompile Include="ServerInterface.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="TCPClient.cpp" />
     <ClCompile Include="TCPServer.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IEvent.hpp" />
+    <ClInclude Include="json.hpp" />
+    <ClInclude Include="LCEServer.hpp" />
     <ClInclude Include="NonCopyable.hpp" />
     <ClInclude Include="Packet.hpp" />
+    <ClInclude Include="Player.hpp" />
+    <ClInclude Include="PlayerInterface.hpp" />
+    <ClInclude Include="QEventBus.hpp" />
+    <ClInclude Include="ServerInterface.hpp" />
     <ClInclude Include="Socket.hpp" />
     <ClInclude Include="TCPClient.hpp" />
     <ClInclude Include="TCPServer.hpp" />
     <ClInclude Include="typedefs.hpp" />
+    <ClInclude Include="Accessors.hpp" />
+    <ClInclude Include="World.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

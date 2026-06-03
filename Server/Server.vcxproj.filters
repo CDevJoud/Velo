@@ -14,6 +14,22 @@
     <ClCompile Include="Packet.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerInterface.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="QEventBus.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerInterface.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="LCEServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Network">
@@ -21,6 +37,9 @@
     </Filter>
     <Filter Include="Util">
       <UniqueIdentifier>{a2930cef-6b5c-459d-b3c0-b5083cc1a0fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{4a562f1b-97dd-477a-80e9-ad060c338d27}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -41,6 +60,29 @@
     </ClInclude>
     <ClInclude Include="Packet.hpp">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="IEvent.hpp" />
+    <ClInclude Include="ServerInterface.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerInterface.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="QEventBus.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="World.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="LCEServer.hpp" />
+    <ClInclude Include="Accessors.hpp">
+      <Filter>Util</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
