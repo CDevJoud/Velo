@@ -3,6 +3,19 @@
 #include <WS2tcpip.h>
 #include <Windows.h>
 
+#pragma warning(disable: 4996)
+#pragma comment(lib, "ws2_32.lib")
+
+struct WinSockInit {
+	WinSockInit() {
+		WSADATA data;
+		WSAStartup(MAKEWORD(2, 2), &data);
+	}
+	~WinSockInit() {
+		WSACleanup();
+	}
+}_WinSockInit;
+
 namespace velo {
 	Socket::Status Socket::getErrorStatus() {
 		switch (WSAGetLastError()) {
@@ -28,7 +41,7 @@ namespace velo {
 	}
 
 	Socket::~Socket() {
-	
+		Socket::close();
 	}
 
 	Socket::Socket(Socket&& other) noexcept {
@@ -64,7 +77,7 @@ namespace velo {
 	}
 
 	void Socket::close() {
-		if (Socket::qwSocket == Socket::Invalid) {
+		if (Socket::qwSocket != Socket::Invalid) {
 			closesocket(Socket::qwSocket);
 			Socket::qwSocket = Socket::Invalid;
 		}
