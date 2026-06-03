@@ -66,9 +66,19 @@ namespace velo {
 		return Status::Done;
 	}
 
+	Socket::Status TCPClient::send(const Packet& p) {
+		Qword r;
+
+		return TCPClient::send(p.bytes.data(), p.bytes.size(), r);
+	}
+
 	Socket::Status TCPClient::receive(void* data, Qword size, Qword& received) {
 		received = 0;
 		if (!data) {
+			return Status::Error;
+		}
+
+		if (Socket::getNativeHandle() == Socket::Invalid) {
 			return Status::Error;
 		}
 
@@ -89,13 +99,35 @@ namespace velo {
 		Packet::ID PID = Packet::ID::Invalid;
 		TCPClient::receive(&packsize, sizeof(Int32), r);
 		TCPClient::receive(&PID, sizeof(Packet::ID), r);
+		p.nPID = PID;
+		packsize = std::byteswap(packsize);
 		Int32 requestedPacketSize = 0;
 		switch (PID) {
+		case velo::Packet::ID::DebugOptions:
+		{
+			p.bytes.resize(packsize);
+			p.nPID = Packet::ID::DebugOptions;
+			break;
+		}
 		case velo::Packet::ID::PreLogin:
 		{
-			p.bytes.resize(PRE_LOGIN_PACKET_SIZE);
+			p.bytes.resize(packsize);
 			requestedPacketSize = PRE_LOGIN_PACKET_SIZE;
 			p.nPID = Packet::ID::PreLogin;
+			break;
+		}
+		case velo::Packet::ID::KeepAlive:
+		{
+			p.bytes.resize(packsize);
+			requestedPacketSize = KEEP_ALIVE_PACKET_SIZE;
+			p.nPID = Packet::ID::KeepAlive;
+			break;
+		}
+		case velo::Packet::ID::Login:
+		{
+			p.bytes.resize(packsize);
+			requestedPacketSize = LOGIN_PACKET_SIZE;
+			p.nPID = Packet::ID::Login;
 			break;
 		}
 		case velo::Packet::ID::Invalid:
@@ -104,8 +136,8 @@ namespace velo {
 			break;
 		}
 
-		Status res = TCPClient::receive(p.bytes.data(), requestedPacketSize, r);
-		if (res != Error) {
+		Status res = TCPClient::receive(p.bytes.data(), packsize, r);
+		if (res != Error && res != Disconnected) {
 			return Done;
 		}
 		return res;
