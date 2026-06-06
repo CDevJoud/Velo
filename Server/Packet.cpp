@@ -30,7 +30,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Int8&>(num)),
 			reinterpret_cast<Byte*>(&const_cast<Int8&>(num)) + sizeof(Int8)
 		);
-		std::cout << "\tWrote Int8\n";
 		return *this;
 	}
 	Packet& Packet::writeInt16(const Int16& num) {
@@ -40,7 +39,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Int16&>(bigEndian)),
 			reinterpret_cast<Byte*>(&const_cast<Int16&>(bigEndian)) + sizeof(Int16)
 		);
-		std::cout << "\tWrote Int16\n";
 		return *this;
 	}
 	Packet& Packet::writeInt32(const Int32& num) {
@@ -50,7 +48,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Int32&>(bigEndian)),
 			reinterpret_cast<Byte*>(&const_cast<Int32&>(bigEndian)) + sizeof(Int32)
 		);
-		std::cout << "\tWrote Int32\n";
 		return *this;
 	}
 	Packet& Packet::writeInt64(const Int64& num) {
@@ -60,7 +57,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Int64&>(bigEndian)),
 			reinterpret_cast<Byte*>(&const_cast<Int64&>(bigEndian)) + sizeof(Int64)	
 		);
-		std::cout << "\tWrote Int64\n";
 		return *this;
 	}
 	Packet& Packet::writeByte(const Byte& num) {
@@ -69,7 +65,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Byte&>(num)),
 			reinterpret_cast<Byte*>(&const_cast<Byte&>(num)) + sizeof(Byte)
 		);
-		std::cout << "\tWrote Byte\n";
 		return *this;
 	}
 	Packet& Packet::writeWord(const Word& num) {
@@ -79,7 +74,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Word&>(bigEndian)),
 			reinterpret_cast<Byte*>(&const_cast<Word&>(bigEndian)) + sizeof(Word)
 		);
-		std::cout << "\tWrote Word\n";
 		return *this;
 	}
 	Packet& Packet::writeDword(const Dword& num) {
@@ -89,7 +83,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Dword&>(bigEndian)),
 			reinterpret_cast<Byte*>(&const_cast<Dword&>(bigEndian)) + sizeof(Dword)
 		);
-		std::cout << "\tWrote Dword\n";
 		return *this;
 	}
 	Packet& Packet::writeQword(const Qword& num) {
@@ -99,7 +92,6 @@ namespace velo {
 			reinterpret_cast<Byte*>(&const_cast<Qword&>(bigEndian)),
 			reinterpret_cast<Byte*>(&const_cast<Qword&>(bigEndian)) + sizeof(Qword)
 		);
-		std::cout << "\tWrote Qword\n";
 		return *this;
 	}
 	Packet& Packet::writeWString(const std::u16string& str) {
@@ -113,7 +105,6 @@ namespace velo {
 				data,
 				data + sizeof(char16_t));
 		}
-		std::cout << "\tWrote WString\n";
 		return *this;
 	}
 	Packet& Packet::readInt8(Int8& num) {
@@ -199,14 +190,14 @@ namespace velo {
 	void Packet::setReadIndex(Int32 index) {
 		this->nRIndex = index;
 	}
-	Packet& Packet::parsePacket(void* packData) {
+	bool Packet::parsePacket(void* packData) {
 		switch (nPID) {
 		case velo::Packet::ID::DebugOptions:
 		{
 			DebugOptionsPacket* dop = (DebugOptionsPacket*)packData;
 			if (dop != nullptr) {
 				*this >> dop->value;
-				return *this;
+				return true;
 			}
 		}
 		break;
@@ -230,8 +221,8 @@ namespace velo {
 				memcpy(plp->uniqueSaveName, uniqueSaveName.arr, uniqueSaveName.size * uniqueSaveName.typeSize);
 				plp->loginKey = new char16_t[loginKey.length() + 1] {};
 				memcpy(plp->loginKey, loginKey.data(), loginKey.length() * sizeof(char16_t));
-				
-				return *this;
+			
+				return true;
 			}
 		}
 			break;
@@ -274,7 +265,7 @@ namespace velo {
 				lp->isGuest = (bool)bIsGuest;
 				lp->newSeaLevel = (bool)bNewSeaLevel;
 				
-				return *this;
+				return true;
 			}
 		}
 			break;
@@ -283,6 +274,7 @@ namespace velo {
 		default:
 			break;
 		}
+		return false;
 	}
 	Packet& Packet::parsePacket(nlohmann::json& json) {
 		switch (nPID) {

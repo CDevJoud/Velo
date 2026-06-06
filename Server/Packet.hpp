@@ -210,7 +210,7 @@ namespace velo {
 		Int32& getReadIndex();
 		void setReadIndex(Int32 index);
 
-		Packet& parsePacket(void* packData);
+		bool parsePacket(void* packData);
 		Packet& parsePacket(nlohmann::json& json);
 
 		Packet& buildPacket(void* packData);
@@ -222,6 +222,7 @@ namespace velo {
 		static const Packet createDebugOptions(const Uint32 value = 0UL);
 		static const Packet createKeepAlive(const Int32 id);
 		static const Packet createChunkVisibility(const Int32 x, const Int32 z, bool visibile);
+		static const Packet createBlockRegionUpdate(Int32 x, Int32 y, Int32 z, Int32 xs, Int32 ys, Int32 zs, Array<Byte> buffer, Int32 levelIdx, bool IsFullChunk);
 		static const Packet createPreLogin(Int16 lceNetworkVersion, const std::u16string& loginKey, Byte friendsOnly, Byte playerCounts, Int32 playersVersion, Int64* playersUID, FixedArray<Byte, 14>* uniqueSaveName, Int32 serverSettings, Byte hostIndex, Int32 texturePackID);
 		static const Packet createLogin(
 			Int32 clientVersion,
