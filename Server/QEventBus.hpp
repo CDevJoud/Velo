@@ -24,7 +24,7 @@ namespace velo {
 		 *
 		 * If empty, destruction of the token has no effect.
 		 */
-		std::function<void()> unsubscribe;
+		std::function<void()> unsubscribe = nullptr;
 
 		SubscriptionToken() = default;
 		explicit SubscriptionToken(std::function<void()> func) : unsubscribe(std::move(func)) {}
@@ -261,7 +261,7 @@ namespace velo {
 
 		return SubscriptionToken{
 			[this, typeIdx, index]() mutable {
-				std::lock_guard<std::mutex> lock(mutex);   // Important: re-lock
+				//std::lock_guard<std::mutex> lock(mutex);   // Important: re-lock
 
 				auto mapIt = this->handlers.find(typeIdx);
 				if (mapIt == this->handlers.end()) return;
