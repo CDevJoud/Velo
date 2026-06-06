@@ -1,8 +1,16 @@
 #pragma once
 
 #include <memory>
-#define IEVENT_DECLARE_EVENT_NAME(_name) virtual const char const* name() const override { return "velo.event" _name; }
+#include <functional>
+#include <optional>
+#include <source_location>
+#define IEVENT_DECLARE_EVENT_NAME(_name) virtual const char const* name() const override { return "velo.event." _name; }
 
+#ifdef _WIN32
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 namespace velo {
 	class TCPClient;
 	class LCEServer;
@@ -15,6 +23,27 @@ namespace velo {
 	};
 
 	namespace event {
+
+		struct Log : IEvent {
+			IEVENT_DECLARE_EVENT_NAME("log")
+			enum Severity {
+				INFO = 0x01,
+				WARN = 0x06,
+				ERROR = 0x04,
+				DEBUG = 0x08,
+				FATAL = 0x4F
+			};
+			Log(
+				Severity s = Severity::INFO,
+				const std::string m = "",
+				const std::string& channel = "default",
+				std::optional<std::source_location> loc = std::nullopt) : severity(s), msg(m), channel(channel), location(loc) {}
+			Severity severity;
+			std::string msg;
+			std::string channel = "default";
+			std::optional<std::source_location> location;
+		};
+
 		namespace client {
 			struct Connect : public IEvent {
 				IEVENT_DECLARE_EVENT_NAME("client.connect")
@@ -70,6 +99,21 @@ namespace velo {
 				std::shared_ptr<PlayerInterface> player;
 				std::shared_ptr<World> world;
 				std::reference_wrapper<LCEServer> server;
+			};
+
+			struct Quit : public IEvent {
+				IEVENT_DECLARE_EVENT_NAME("player.quit")
+				Quit(
+					const std::shared_ptr<PlayerInterface>& player,
+					const std::shared_ptr<World>& world,
+					const std::reference_wrapper<LCEServer> server
+					//const std::function<void()> denied_request_callback = nullptr
+				) : player(player), world(world), server(server) /*deniedReqCB(denied_request_callback)*/{}
+
+				std::shared_ptr<PlayerInterface> player;
+				std::shared_ptr<World> world;
+				std::reference_wrapper<LCEServer> server;
+				//std::function<void()> deniedReqCB;
 			};
 		}
 	}
