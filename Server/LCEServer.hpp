@@ -5,6 +5,7 @@
 #include "World.hpp"
 
 namespace velo {
+	class Logger;
 	class LCEServer : public ServerInterface, private TCPServer {
 	public:
 		LCEServer();
@@ -28,8 +29,9 @@ namespace velo {
 		inline void initQEventBusSubscriptions();
 		__forceinline void handleIncomingConnection(TCPClient& client);
 		Config cfg;
-		QEventBus qBus;
+		QEventBus qBus, qLogBus;
 		std::shared_ptr<World> world;
+		std::unique_ptr<Logger> logger;
 	};
 }
 
