@@ -1,12 +1,27 @@
-#include "TCPClient.hpp"
 #pragma warning(disable: 4996)
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
+#include "TCPClient.hpp"
 
 #include "Packet.hpp"
 
+#define LOG_INFO(msg)  qBus.get().post(event::Log(event::Log::Severity::INFO, msg));
+#define LOG_DEBUG(msg) qBus.get().post(event::Log(event::Log::Severity::DEBUG, msg));
+#define LOG_WARN(msg)  qBus.get().post(event::Log(event::Log::Severity::WARN, msg));
+#define LOG_ERROR(msg) qBus.get().post(event::Log(event::Log::Severity::ERROR, msg));
+#define LOG_FATAL(msg) qBus.get().post(event::Log(event::Log::Severity::FATAL, msg));
+#define LOG_INFO_TRACE(msg)  qBus.get().post(event::Log(event::Log::Severity::INFO, msg, "default", std::source_location::current()));
+#define LOG_DEBUG_TRACE(msg) qBus.get().post(event::Log(event::Log::Severity::DEBUG, msg, "default", std::source_location::current()));
+#define LOG_WARN_TRACE(msg)  qBus.get().post(event::Log(event::Log::Severity::WARN, msg, "default", std::source_location::current()));
+#define LOG_ERROR_TRACE(msg) qBus.get().post(event::Log(event::Log::Severity::ERROR, msg, "default", std::source_location::current()));
+#define LOG_FATAL_TRACE(msg) qBus.get().post(event::Log(event::Log::Severity::FATAL, msg, "default", std::source_location::current()));
+
+
 namespace velo {
+	TCPClient::TCPClient(const std::reference_wrapper<QEventBus>& qBus) : qBus(qBus) {
+		
+	}
 	Word TCPClient::getLocalPort() const {
 		if (Socket::getNativeHandle() != Socket::Invalid) {
 			struct sockaddr_in address {};
@@ -47,6 +62,7 @@ namespace velo {
 	}
 	Socket::Status TCPClient::send(const void* data, Qword size, Qword& sent) {
 		if (!data || (size == 0)) {
+			LOG_ERROR_TRACE("Empty 'data' or 'size == 0'")
 			return Status::Error;
 		}
 
@@ -75,10 +91,12 @@ namespace velo {
 	Socket::Status TCPClient::receive(void* data, Qword size, Qword& received) {
 		received = 0;
 		if (!data) {
+			LOG_ERROR_TRACE("Invalid data! data is nullptr");
 			return Status::Error;
 		}
 
 		if (Socket::getNativeHandle() == Socket::Invalid) {
+			LOG_ERROR_TRACE("[TCPClient] my socket is Invalid! you forgot to create me? or used after free?");
 			return Status::Error;
 		}
 
@@ -133,13 +151,19 @@ namespace velo {
 		case velo::Packet::ID::Invalid:
 			break;
 		default:
+			LOG_INFO("[TCPClient] Packet ID of " + std::to_string(static_cast<Byte>(PID)) + " is not a valid LCE packet")
 			break;
 		}
 
-		Status res = TCPClient::receive(p.bytes.data(), packsize, r);
-		if (res != Error && res != Disconnected) {
-			return Done;
+		if (!p.bytes.empty()) {
+			Status res = TCPClient::receive(p.bytes.data(), packsize, r);
+			if (res != Error && res != Disconnected) {
+				return Done;
+			}
+			return res;
 		}
-		return res;
+		else {
+			return Error;
+		}
     }
 }
