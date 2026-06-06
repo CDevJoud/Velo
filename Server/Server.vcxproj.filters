@@ -30,6 +30,21 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="LCEServer.cpp" />
+    <ClCompile Include="Logger.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="miniz.c">
+      <Filter>Util\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniz_tdef.c">
+      <Filter>Util\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniz_tinfl.c">
+      <Filter>Util\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="RLEInflateCodec.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Network">
@@ -40,6 +55,9 @@
     </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{4a562f1b-97dd-477a-80e9-ad060c338d27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util\miniz">
+      <UniqueIdentifier>{2044340e-dfef-4a04-a604-6744ae775b22}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -83,6 +101,24 @@
     <ClInclude Include="LCEServer.hpp" />
     <ClInclude Include="Accessors.hpp">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="miniz_tinfl.h">
+      <Filter>Util\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniz.h">
+      <Filter>Util\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniz_common.h">
+      <Filter>Util\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniz_tdef.h">
+      <Filter>Util\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="RLEInflateCodec.hpp">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
