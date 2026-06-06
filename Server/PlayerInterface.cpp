@@ -6,8 +6,10 @@ namespace velo{
 		const Int32 entityID, 
 		const std::u16string& username, 
 		const std::reference_wrapper<QEventBus>& qBus, 
+		const std::reference_wrapper<QEventBus>& qLogBus, 
 		const std::reference_wrapper<ServerInterface>& serverInterface) : 
 		qBus(qBus),
+		qLogBus(qLogBus),
 		serverInterface(serverInterface),
 		username(username),
 		entityID(entityID),
@@ -27,6 +29,9 @@ namespace velo{
 	bool PlayerInterface::onPlayerJoin(std::shared_ptr<World>& world) {
 		return false;
 	}
+    bool PlayerInterface::onPlayerQuit(const std::shared_ptr<World>& world) {
+        return false;
+    }
 	std::shared_ptr<TCPClient>& PlayerInterface::getTCPClient() {
 		return this->client;
 	}
@@ -35,6 +40,9 @@ namespace velo{
 	}
 	std::reference_wrapper<QEventBus>& PlayerInterface::getQEventBus() {
 		return this->qBus;
+	}
+	std::reference_wrapper<QEventBus>& PlayerInterface::getQEventLogBus() {
+		return this->qLogBus;
 	}
 	std::u16string PlayerInterface::getUsername() const {
 		return this->username;

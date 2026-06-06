@@ -11,13 +11,15 @@ namespace velo {
 			const Int32 entityID,
 			const std::u16string& username,
 			const std::reference_wrapper<QEventBus>& qBus,
+			const std::reference_wrapper<QEventBus>& qLogBus,
 			const std::reference_wrapper<ServerInterface>& serverInterface);
 
 		~Player();
 
 		virtual bool onPlayerConnect(const std::shared_ptr<PlayerInterface>& player) override;
 		virtual bool onPlayerDisconnect(const std::shared_ptr<PlayerInterface>& player) override;
-		virtual bool onPlayerJoin(std::shared_ptr<World>& world) override final;
+		virtual bool onPlayerJoin(std::shared_ptr<World>& world) override;
+		virtual bool onPlayerQuit(const std::shared_ptr<World>& world) override;
 
 		std::reference_wrapper<LCEServer>& getServer();
 
@@ -26,7 +28,8 @@ namespace velo {
 		void join(const std::shared_ptr<World>& world);
 	private:
 		friend class LCEServer;
-		//void addSelf(const std::shared_ptr<Player>& self);
+		std::shared_ptr<World> world;// the world the player is playing in.
 		SubscriptionToken qEvent_playerConnect, qEvent_playerDisconnect;
+		std::shared_ptr<Player> self;
 	};
 }

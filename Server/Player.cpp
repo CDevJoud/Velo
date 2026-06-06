@@ -6,14 +6,27 @@
 
 #include "Accessors.hpp"
 
+#define LOG_INFO(msg)  qLogBus.get().post(event::Log(event::Log::Severity::INFO, msg));
+#define LOG_DEBUG(msg) qLogBus.get().post(event::Log(event::Log::Severity::DEBUG, msg));
+#define LOG_WARN(msg)  qLogBus.get().post(event::Log(event::Log::Severity::WARN, msg));
+#define LOG_ERROR(msg) qLogBus.get().post(event::Log(event::Log::Severity::ERROR, msg));
+#define LOG_FATAL(msg) qLogBus.get().post(event::Log(event::Log::Severity::FATAL, msg));
+#define LOG_INFO_TRACE (msg) qLogBus.get().post(event::Log(event::Log::Severity::INFO , msg, "default", std::source_location::current()));
+#define LOG_DEBUG_TRACE(msg) qLogBus.get().post(event::Log(event::Log::Severity::DEBUG, msg, "default", std::source_location::current()));
+#define LOG_WARN_TRACE (msg) qLogBus.get().post(event::Log(event::Log::Severity::WARN , msg, "default", std::source_location::current()));
+#define LOG_ERROR_TRACE(msg) qLogBus.get().post(event::Log(event::Log::Severity::ERROR, msg, "default", std::source_location::current()));
+#define LOG_FATAL_TRACE(msg) qLogBus.get().post(event::Log(event::Log::Severity::FATAL, msg, "default", std::source_location::current()));
+
+
 namespace velo {
 	Player::Player(
 		const std::shared_ptr<TCPClient>& client,
 		const Int32 entityID,
 		const std::u16string& username,
 		const std::reference_wrapper<QEventBus>& qBus,
+		const std::reference_wrapper<QEventBus>& qLogBus,
 		const std::reference_wrapper<ServerInterface>& serverInterface) :
-		PlayerInterface(client, entityID, username, qBus, serverInterface) {
+		PlayerInterface(client, entityID, username, qBus, qLogBus, serverInterface) {
 
 		// in the future it needs to override existing impl!
 		// some what like a static function
@@ -34,8 +47,9 @@ namespace velo {
 
 			std::shared_ptr<Player> player = nullptr;
 			std::shared_ptr<TCPClient> tcpClient = nullptr;
-			
+
 			if (instance1 == instance2) {
+				auto& qLogBus = instance1->getQEventLogBus();
 				player = std::dynamic_pointer_cast<Player>(instance1);
 				if (player != nullptr) {
 					tcpClient = player->getTCPClient();
@@ -66,7 +80,7 @@ namespace velo {
 					));
 				}
 				else {
-					std::cout << "[CRITICAL] Attempted access to nullptr detected. Operation aborted safely to prevent segmentation fault and maintain application stability." << std::endl;
+					LOG_ERROR_TRACE("[CRITICAL] Attempted access to nullptr detected. Operation aborted safely to prevent segmentation fault and maintain application stability.");
 				}
 			}
 		});
@@ -78,16 +92,19 @@ namespace velo {
 
 	bool Player::onPlayerConnect(const std::shared_ptr<PlayerInterface>& player) {
 		std::shared_ptr<Player> instance = std::dynamic_pointer_cast<Player>(player);
-		std::cout << "Player ";
-		std::u16string username = safe_access<std::u16string>(instance, [](const std::shared_ptr<Player>& p) { return p->getUsername(); });
-		if (username.empty()) {
-			return false; // username could not be found 
-		}
-		for (int i = 0; i < username.length(); i++) {
-			std::cout << static_cast<char>(player->getUsername()[i]);
-		}
-		std::cout << " connected to the server!\n";
 
+		std::u16string username = instance->getUsername();
+
+		auto& qLogBus = instance->getQEventLogBus();
+		std::string username8(username.begin(), username.end());
+		LOG_INFO("@velo: Player " + username8 + " connected to the server!");
+		
+		std::shared_ptr<World> world = instance->getServer().get().getWorld();
+		if (world == nullptr) {
+			return false;
+		}
+
+		LOG_INFO("@velo: Player joining " + world->getName());
 		instance->join(instance->getServer().get().getWorld());
 
 		return true;
@@ -96,11 +113,12 @@ namespace velo {
 	bool Player::onPlayerDisconnect(const std::shared_ptr<PlayerInterface>& player) {
 		auto instance = (Player*)player.get();
 		if (instance != nullptr) {
-			std::cout << "Player ";
-			for (int i = 0; i < player->getUsername().length(); i++) {
-				std::cout << static_cast<char>(player->getUsername()[i]);
-			}
-			std::cout << " disconnected from the server!\n";
+			auto& qLogBus = instance->getQEventLogBus();
+
+			std::u16string username = instance->getUsername();
+			std::string username8(username.begin(), username.end());
+
+			LOG_INFO("[Player] " + username8 + " disconnected from the server");
 			return true;
 		}
 		return false;
@@ -110,22 +128,22 @@ namespace velo {
 		return true;
 	}
 
+	bool Player::onPlayerQuit(const std::shared_ptr<World>& world) {
+		return true;
+	}
+
 	std::reference_wrapper<LCEServer>& Player::getServer() {
 		return *(std::reference_wrapper<LCEServer>*)(&Player::getServerInterface());
 	}
 
 	void Player::handleConnection(const std::shared_ptr<Player>& _) {
 		std::shared_ptr<Player> instance = _; // keep me alive!
-
-		//for now just send the world data in this way!
-		/*safe_access(instance, [](const std::shared_ptr<Player>& _instance) {
-			safe_access(_instance->getTCPClient(), [](const std::shared_ptr<TCPClient>& client) {
-				client->send(Packet::createChunkVisibility(0, 0, true));
-				});
-			});*/
+		instance->self = _; // also keep me alive!
 
 		Int32 countKeepAlive = 0;
-
+		auto& qLogBus = instance->self->getQEventLogBus();
+		std::u16string username = instance->self->getUsername();
+		std::string username8(username.begin(), username.end());
 		while (safe_access<bool>(instance, [](const auto& _instance) -> bool {return _instance->getServerInterface().get().isServerRunning();}, false)) {
 			Packet req = Packet::ID::Invalid;
 
@@ -141,8 +159,8 @@ namespace velo {
 			Packet::ID pid = req.getID();
 			switch (pid) {
 			case velo::Packet::ID::KeepAlive:
-				std::cout << "Player sent Keep Alive" << std::endl;
-				std::cout << "Times player sent keep alive: " << countKeepAlive++ << std::endl;
+				LOG_INFO("[Player] " + username8 + " sent keep alive");
+				countKeepAlive++;
 				break;
 			case velo::Packet::ID::Login:
 				break;
@@ -155,7 +173,7 @@ namespace velo {
 			{
 				DebugOptionsPacket dop{};
 				req.parsePacket(&dop);
-				std::cout << "Player sent Debug Options: " << dop.value << std::endl;
+				LOG_INFO("[Player] " + username8 + " sent debug options: " + std::to_string(dop.value));
 			}
 			default:
 				break;
@@ -173,6 +191,9 @@ namespace velo {
 				break;
 			}
 		}
+		// it means just quit from the world
+		// and prepare for proper disconnection
+		instance->join(nullptr);
 		safe_access(instance, [](const std::shared_ptr<Player>& _instance) {
 			_instance->getQEventBus().get().post(
 				event::player::Disconnect(
@@ -182,15 +203,37 @@ namespace velo {
 				)
 			);
 			});
+		instance->self = nullptr;
 		instance = nullptr; // destroy the player instance
 	}
 	void Player::join(const std::shared_ptr<World>& world) {
-		Player::getQEventBus().get().post(
-			event::player::Join(
-				std::shared_ptr<PlayerInterface>(this),
-				this->getServer().get().getWorld(),
-				this->getServer()
-			)
-		);
+		if (Player::world == nullptr) {
+			Player::world = world;
+			std::shared_ptr<int> s;
+			Player::getQEventBus().get().post(
+				event::player::Join(
+					self,
+					world,
+					this->getServer()
+				)
+			);
+		}
+		else {
+			Player::getQEventBus().get().post(
+				event::player::Quit(
+					self,
+					Player::world,
+					this->getServer()
+				)
+			);
+			Player::world = world; // store the new world
+			Player::getQEventBus().get().post(
+				event::player::Join(
+					self,
+					Player::world,
+					this->getServer()
+				)
+			);
+		}
 	}
 }
