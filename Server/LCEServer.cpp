@@ -1,9 +1,11 @@
+#include <Windows.h>
 #include "LCEServer.hpp"
 #include <thread>
 #include "Packet.hpp"
 #include <iostream>
 #include "Player.hpp"
 #include "Logger.hpp"
+#include "XVAPI_Impl.hpp"
 
 #define LOG_INFO(msg)  qLogBus.post(event::Log(event::Log::Severity::INFO, msg));
 #define LOG_DEBUG(msg) qLogBus.post(event::Log(event::Log::Severity::DEBUG, msg));
@@ -17,21 +19,46 @@
 #define LOG_FATAL_TRACE(msg) qLogBus.post(event::Log(event::Log::Severity::FATAL, msg, "default", std::source_location::current()));
 
 namespace velo {
+	HMODULE hMod = nullptr;
+	typedef Xint32(*XI_mainFn)(Xvoid*);
+	typedef Xconst XAPIDescriptor(*XI_queryFn)(Xvoid);
+	typedef Xint32(*XI_terminateFn)(Xvoid*);
+	XI_terminateFn XI_terminate;
+
 	LCEServer::LCEServer() : qBus("LCEServer"), qLogBus("LCEServerLog") {
 		qBus.runAsync();
 		qLogBus.runAsync();
 		LCEServer::logger = std::make_unique<Logger>(std::ref(qLogBus));
+		setGlobalEventBus(&qLogBus);
+		pushQEventBus(&qBus);
+		pushQEventBus(&qLogBus);
+
+		hMod = LoadLibraryA("DemoPlugin.dll");
+		
+		XI_queryFn XI_query = (XI_queryFn)GetProcAddress(hMod, "XI_query");
+		
+		XAPIDescriptor modDescriptor = XI_query();
+
+		XI_mainFn XI_main = (XI_mainFn)GetProcAddress(hMod, "XI_main");
+
+		XI_main(velo_createDeviceAndContext);
+
+		XI_terminate = (XI_terminateFn)GetProcAddress(hMod, "XI_terminate");
+
 		LCEServer::initQEventBusSubscriptions();
 
 		LOG_INFO("Starting the server please wait...");
-		std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
+		std::this_thread::sleep_for(std::chrono::milliseconds(0));
+		
 		LOG_INFO("Loading default world");
 		LCEServer::world = std::make_shared<World>(std::ref(qBus), std::ref(qLogBus), std::ref(*this));
 		LOG_INFO("Done.");
 	}
 	LCEServer::~LCEServer() {
-
+		XI_terminate(velo_destroyDeviceAndContext);
+		FreeLibrary(hMod);
+		qBus.stop();
+		qLogBus.stop();
 	}
 	bool LCEServer::onClientConnect(const std::shared_ptr<TCPClient>& client, std::u16string& clientUsername) {
 		
