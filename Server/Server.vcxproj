@@ -141,6 +141,7 @@
     <ClCompile Include="TCPClient.cpp" />
     <ClCompile Include="TCPServer.cpp" />
     <ClCompile Include="World.cpp" />
+    <ClCompile Include="XVAPI_Impl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IEvent.hpp" />
@@ -164,6 +165,8 @@
     <ClInclude Include="typedefs.hpp" />
     <ClInclude Include="Accessors.hpp" />
     <ClInclude Include="World.hpp" />
+    <ClInclude Include="XVAPI.h" />
+    <ClInclude Include="XVAPI_Impl.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

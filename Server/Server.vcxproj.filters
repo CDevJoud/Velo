@@ -45,6 +45,9 @@
     <ClCompile Include="RLEInflateCodec.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="XVAPI_Impl.cpp">
+      <Filter>Core\Plugin</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Network">
@@ -58,6 +61,9 @@
     </Filter>
     <Filter Include="Util\miniz">
       <UniqueIdentifier>{2044340e-dfef-4a04-a604-6744ae775b22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Plugin">
+      <UniqueIdentifier>{9a421b2f-df1b-496e-bcc7-0ce2066da04d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +125,12 @@
     </ClInclude>
     <ClInclude Include="RLEInflateCodec.hpp">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="XVAPI.h">
+      <Filter>Core\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="XVAPI_Impl.hpp">
+      <Filter>Core\Plugin</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
