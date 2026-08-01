@@ -4,7 +4,7 @@
 
 namespace velo {
 	class Player;
-	class World {
+	class World : public IntrusiveCounted {
 	public:
 		World(
 			const std::reference_wrapper<QEventBus>& qBus,
@@ -15,7 +15,7 @@ namespace velo {
 
 		std::string getName() const;
 	private:
-		std::vector<std::weak_ptr<Player>> players;
+		std::vector<Player*> players;
 		std::reference_wrapper<LCEServer> server;
 		std::reference_wrapper<QEventBus> qBus, qLogBus;
 		SubscriptionToken QEvent_playerJoin, QEvent_playerQuit;

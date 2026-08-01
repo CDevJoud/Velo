@@ -3,6 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.14.36401.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{6FC1E95E-612B-4CE8-8E65-59D0A66F1C83}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1A486304-3DBD-4000-9C74-901872FE72D2} = {1A486304-3DBD-4000-9C74-901872FE72D2}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DemoPlugin", "DemoPlugin\DemoPlugin.vcxproj", "{1A486304-3DBD-4000-9C74-901872FE72D2}"
 EndProject

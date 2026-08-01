@@ -3,15 +3,16 @@
 #include "TCPServer.hpp"
 #include "QEventBus.hpp"
 #include "World.hpp"
+#include "PluginManager.hpp"
 
 namespace velo {
 	class Logger;
-	class LCEServer : public ServerInterface, private TCPServer {
+	class LCEServer : public ServerInterface, private TCPServer{
 	public:
 		LCEServer();
 		~LCEServer();
-		virtual bool onClientConnect(const std::shared_ptr<TCPClient>& client, std::u16string& clientUsername) override;
-		virtual bool onClientDisconnect(const std::shared_ptr<TCPClient>& client, std::u16string& clientUsername) override;
+		virtual bool onClientConnect(Intrusive<TCPClient>& client, std::u16string& clientUsername) override;
+		virtual bool onClientDisconnect(Intrusive<TCPClient>& client, std::u16string& clientUsername) override;
 
 		struct Config {
 			Int32 maxPlayers = 20;
@@ -24,14 +25,16 @@ namespace velo {
 
 		Int32 runService();
 
-		std::shared_ptr<World>& getWorld();
+		Intrusive<World>& getWorld();
 	private:
 		inline void initQEventBusSubscriptions();
 		__forceinline void handleIncomingConnection(TCPClient& client);
 		Config cfg;
 		QEventBus qBus, qLogBus;
-		std::shared_ptr<World> world;
+		Intrusive<World> world;
+		std::unique_ptr<PluginManager> plm;
 		std::unique_ptr<Logger> logger;
+		std::thread tuiThread;
 	};
 }
 

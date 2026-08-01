@@ -1,7 +1,7 @@
+#include "LCEServer.hpp"
 #include "Player.hpp"
 #include "Packet.hpp"
 #include <iostream>
-#include "LCEServer.hpp"
 #include "World.hpp"
 
 #include "Accessors.hpp"
@@ -20,7 +20,7 @@
 
 namespace velo {
 	Player::Player(
-		const std::shared_ptr<TCPClient>& client,
+		const Intrusive<TCPClient>& client,
 		const Int32 entityID,
 		const std::u16string& username,
 		const std::reference_wrapper<QEventBus>& qBus,
@@ -31,8 +31,8 @@ namespace velo {
 		// in the future it needs to override existing impl!
 		// some what like a static function
 		qEvent_playerConnect = qBus.get().subscribeRAII<event::player::Connect>([](const event::player::Connect& e) {
-			std::shared_ptr<PlayerInterface> instance1 = e.server.get().getPlayer(e.username);
-			std::shared_ptr<PlayerInterface> instance2 = e.player;
+			Intrusive<PlayerInterface> instance1 = e.server.get().getPlayer(e.username);
+			Intrusive<PlayerInterface> instance2 = e.player;
 			
 			if (instance1 == instance2) { // its correct player and not an empty data
 				bool ret = instance1->onPlayerConnect(instance1);
@@ -42,15 +42,15 @@ namespace velo {
 			}
 			});
 		qEvent_playerDisconnect = qBus.get().subscribeRAII<event::player::Disconnect>([](const event::player::Disconnect& e) {
-			const std::shared_ptr<PlayerInterface>& instance1 = e.server.get().getPlayer(e.username);
-			const std::shared_ptr<PlayerInterface>& instance2 = e.player;
+			const Intrusive<PlayerInterface>& instance1 = e.server.get().getPlayer(e.username);
+			const Intrusive<PlayerInterface>& instance2 = e.player;
 
-			std::shared_ptr<Player> player = nullptr;
-			std::shared_ptr<TCPClient> tcpClient = nullptr;
+			Intrusive<Player> player = nullptr;
+			Intrusive<TCPClient> tcpClient = nullptr;
 
 			if (instance1 == instance2) {
 				auto& qLogBus = instance1->getQEventLogBus();
-				player = std::dynamic_pointer_cast<Player>(instance1);
+				player = dynamicPtrCast<Player>(instance1);
 				if (player != nullptr) {
 					tcpClient = player->getTCPClient();
 				}
@@ -90,28 +90,27 @@ namespace velo {
 
 	}
 
-	bool Player::onPlayerConnect(const std::shared_ptr<PlayerInterface>& player) {
-		std::shared_ptr<Player> instance = std::dynamic_pointer_cast<Player>(player);
+	bool Player::onPlayerConnect(const Intrusive<PlayerInterface>& player) {
+		Intrusive<Player> instance = dynamicPtrCast<Player>(player);
 
 		std::u16string username = instance->getUsername();
 
 		auto& qLogBus = instance->getQEventLogBus();
 		std::string username8(username.begin(), username.end());
 		LOG_INFO("@velo: Player " + username8 + " connected to the server!");
-		
-		std::shared_ptr<World> world = instance->getServer().get().getWorld();
+
+		Intrusive<World> world = instance->getServer().get().getWorld();
 		if (world == nullptr) {
 			return false;
 		}
 
 		LOG_INFO("@velo: Player joining " + world->getName());
 		instance->join(instance->getServer().get().getWorld());
-
 		return true;
 	}
 
-	bool Player::onPlayerDisconnect(const std::shared_ptr<PlayerInterface>& player) {
-		auto instance = (Player*)player.get();
+	bool Player::onPlayerDisconnect(const Intrusive<PlayerInterface>& player) {
+		auto& instance = player;
 		if (instance != nullptr) {
 			auto& qLogBus = instance->getQEventLogBus();
 
@@ -124,11 +123,11 @@ namespace velo {
 		return false;
 	}
 
-	bool Player::onPlayerJoin(std::shared_ptr<World>& world) {
+	bool Player::onPlayerJoin(Intrusive<World>& world) {
 		return true;
 	}
 
-	bool Player::onPlayerQuit(const std::shared_ptr<World>& world) {
+	bool Player::onPlayerQuit(const Intrusive<World>& world) {
 		return true;
 	}
 
@@ -136,8 +135,8 @@ namespace velo {
 		return *(std::reference_wrapper<LCEServer>*)(&Player::getServerInterface());
 	}
 
-	void Player::handleConnection(const std::shared_ptr<Player>& _) {
-		std::shared_ptr<Player> instance = _; // keep me alive!
+	void Player::handleConnection(const Intrusive<Player>& _) {
+		Intrusive<Player> instance = _; // keep me alive!
 		instance->self = _; // also keep me alive!
 
 		Int32 countKeepAlive = 0;
@@ -147,8 +146,8 @@ namespace velo {
 		while (safe_access<bool>(instance, [](const auto& _instance) -> bool {return _instance->getServerInterface().get().isServerRunning();}, false)) {
 			Packet req = Packet::ID::Invalid;
 
-			auto res = safe_access<Socket::Status>(instance, [&req](const auto& _instance) {
-				return safe_access<Socket::Status>(_instance->getTCPClient(), [&req](const auto& client) {
+			auto res = safe_access<Socket::Status>(instance, [&req](const Intrusive<Player>& _instance) {
+				return safe_access<Socket::Status>(_instance->getTCPClient(), [&req](const Intrusive<TCPClient>& client) {
 					return client->receive(req);
 					});
 				});
@@ -179,8 +178,8 @@ namespace velo {
 				break;
 			}
 			if (countKeepAlive >= 5) {
-				safe_access(instance, [](const std::shared_ptr<Player>& _instance) {
-					safe_access(_instance->getTCPClient(), [](const std::shared_ptr<TCPClient>& client) {
+				safe_access(instance, [](const Intrusive<Player>&_instance) {
+					safe_access(_instance->getTCPClient(), [](const Intrusive<TCPClient>& client) {
 						client->send(
 							Packet::createDisconnect(
 								DisconnectPacket::LoginTooLong
@@ -194,10 +193,10 @@ namespace velo {
 		// it means just quit from the world
 		// and prepare for proper disconnection
 		instance->join(nullptr);
-		safe_access(instance, [](const std::shared_ptr<Player>& _instance) {
+		safe_access(instance, [](const Intrusive<Player>& _instance) {
 			_instance->getQEventBus().get().post(
 				event::player::Disconnect(
-					std::dynamic_pointer_cast<PlayerInterface>(_instance),
+					dynamicPtrCast<PlayerInterface>(_instance),
 					_instance->getUsername(),
 					_instance->getServer()
 				)
@@ -206,13 +205,12 @@ namespace velo {
 		instance->self = nullptr;
 		instance = nullptr; // destroy the player instance
 	}
-	void Player::join(const std::shared_ptr<World>& world) {
+	void Player::join(const Intrusive<World>& world) {
 		if (Player::world == nullptr) {
 			Player::world = world;
-			std::shared_ptr<int> s;
 			Player::getQEventBus().get().post(
 				event::player::Join(
-					self,
+					dynamicPtrCast<PlayerInterface>(self),
 					world,
 					this->getServer()
 				)
@@ -221,7 +219,7 @@ namespace velo {
 		else {
 			Player::getQEventBus().get().post(
 				event::player::Quit(
-					self,
+					dynamicPtrCast<PlayerInterface>(self),
 					Player::world,
 					this->getServer()
 				)
@@ -229,7 +227,7 @@ namespace velo {
 			Player::world = world; // store the new world
 			Player::getQEventBus().get().post(
 				event::player::Join(
-					self,
+					dynamicPtrCast<PlayerInterface>(self),
 					Player::world,
 					this->getServer()
 				)

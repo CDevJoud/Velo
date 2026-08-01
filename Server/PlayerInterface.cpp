@@ -2,7 +2,7 @@
 
 namespace velo{
 	PlayerInterface::PlayerInterface(
-		const std::shared_ptr<TCPClient>& client, 
+		const Intrusive<TCPClient>& client, 
 		const Int32 entityID, 
 		const std::u16string& username, 
 		const std::reference_wrapper<QEventBus>& qBus, 
@@ -20,28 +20,28 @@ namespace velo{
 	PlayerInterface::~PlayerInterface() {
 	
 	}
-	bool PlayerInterface::onPlayerConnect(const std::shared_ptr<PlayerInterface>& player) {
+	bool PlayerInterface::onPlayerConnect(const Intrusive<PlayerInterface>& player) {
 		return false;
 	}
-	bool PlayerInterface::onPlayerDisconnect(const std::shared_ptr<PlayerInterface>& player) {
+	bool PlayerInterface::onPlayerDisconnect(const Intrusive<PlayerInterface>& player) {
 		return false;
 	}
-	bool PlayerInterface::onPlayerJoin(std::shared_ptr<World>& world) {
+	bool PlayerInterface::onPlayerJoin(Intrusive<World>& world) {
 		return false;
 	}
-    bool PlayerInterface::onPlayerQuit(const std::shared_ptr<World>& world) {
+    bool PlayerInterface::onPlayerQuit(const Intrusive<World>& world) {
         return false;
     }
-	std::shared_ptr<TCPClient>& PlayerInterface::getTCPClient() {
+	const Intrusive<TCPClient>& PlayerInterface::getTCPClient() const {
 		return this->client;
 	}
-	const std::reference_wrapper<ServerInterface>& PlayerInterface::getServerInterface() {
+	const std::reference_wrapper<ServerInterface>& PlayerInterface::getServerInterface() const {
 		return this->serverInterface;
 	}
-	std::reference_wrapper<QEventBus>& PlayerInterface::getQEventBus() {
+	const std::reference_wrapper<QEventBus>& PlayerInterface::getQEventBus() const {
 		return this->qBus;
 	}
-	std::reference_wrapper<QEventBus>& PlayerInterface::getQEventLogBus() {
+	const std::reference_wrapper<QEventBus>& PlayerInterface::getQEventLogBus() const {
 		return this->qLogBus;
 	}
 	std::u16string PlayerInterface::getUsername() const {

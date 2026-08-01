@@ -4,6 +4,7 @@
 #include <functional>
 #include <optional>
 #include <source_location>
+#include "Intrusive.hpp"
 #define IEVENT_DECLARE_EVENT_NAME(_name) virtual const char const* name() const override { return "velo.event." _name; }
 
 #ifdef _WIN32
@@ -12,7 +13,6 @@
 #endif
 #endif
 namespace velo {
-	class TCPClient;
 	class LCEServer;
 	class Player;
 	class World;
@@ -45,77 +45,77 @@ namespace velo {
 		};
 
 		namespace client {
-			struct Connect : public IEvent {
+			/*struct Connect : public IEvent {
 				IEVENT_DECLARE_EVENT_NAME("client.connect")
 				Connect(
-					const std::shared_ptr<TCPClient>& client, 
+					const Intrusive<TCPClient>& client,
 					const std::reference_wrapper<LCEServer>& server
 				) : tcpClient(client), server(server) {}
-				std::shared_ptr<TCPClient> tcpClient;
+				Intrusive<TCPClient> tcpClient;
 				std::reference_wrapper<LCEServer> server;
 			};
 			struct Disconnect : public IEvent {
 				IEVENT_DECLARE_EVENT_NAME("client.disconnect")
 				Disconnect(
-					const std::shared_ptr<TCPClient>& client, 
+					const Intrusive<TCPClient>& client, 
 					const std::reference_wrapper<LCEServer>& server
 				) : tcpClient(client), server(server) {}
-				std::shared_ptr<TCPClient> tcpClient;
+				Intrusive<TCPClient> tcpClient;
 				std::reference_wrapper<LCEServer> server;
-			};
+			};*/
 		}
 		namespace player {
-			struct Connect : public IEvent {
-				IEVENT_DECLARE_EVENT_NAME("player.connect")
-				Connect(
-					const std::shared_ptr<PlayerInterface>& player, 
-					const std::u16string& username, 
-					const std::reference_wrapper<LCEServer>& server
-				) : player(player), username(username), server(server) {}
-				std::shared_ptr<PlayerInterface> player;
-				std::reference_wrapper<LCEServer> server;
-				std::u16string username;
-			};
-			struct Disconnect : public IEvent {
-				IEVENT_DECLARE_EVENT_NAME("player.disconnect")
-				Disconnect(
-					const std::shared_ptr<PlayerInterface>& player, 
-					const std::u16string& username, 
-					const std::reference_wrapper<LCEServer> server
-				) : player(player), username(username), server(server) {}
-				std::shared_ptr<PlayerInterface> player;
-				std::u16string username;
-				std::reference_wrapper<LCEServer> server;
-			};
+			//struct Connect : public IEvent {
+			//	IEVENT_DECLARE_EVENT_NAME("player.connect")
+			//	Connect(
+			//		const Intrusive<PlayerInterface>& player, 
+			//		const std::u16string& username, 
+			//		const std::reference_wrapper<LCEServer>& server
+			//	) : player(player), username(username), server(server) {}
+			//	Intrusive<PlayerInterface> player;
+			//	std::reference_wrapper<LCEServer> server;
+			//	std::u16string username;
+			//};
+			//struct Disconnect : public IEvent {
+			//	IEVENT_DECLARE_EVENT_NAME("player.disconnect")
+			//	Disconnect(
+			//		const Intrusive<PlayerInterface>& player,
+			//		const std::u16string& username, 
+			//		const std::reference_wrapper<LCEServer> server
+			//	) : player(player), username(username), server(server) {}
+			//	Intrusive<PlayerInterface> player;
+			//	std::u16string username;
+			//	std::reference_wrapper<LCEServer> server;
+			//};
 
-			struct Join : public IEvent {
-				IEVENT_DECLARE_EVENT_NAME("player.join")
-				Join(
-					const std::shared_ptr<PlayerInterface>& player,
-					const std::shared_ptr<World>& world,
-					const std::reference_wrapper<LCEServer> server
-				) : player(player), world(world), server(server) {}
+			//struct Join : public IEvent {
+			//	IEVENT_DECLARE_EVENT_NAME("player.join")
+			//	Join(
+			//		const Intrusive<PlayerInterface>& player,
+			//		const Intrusive<World>& world,
+			//		const std::reference_wrapper<LCEServer> server
+			//	) : player(player), world(world), server(server) {}
 
-				std::shared_ptr<PlayerInterface> player;
-				std::shared_ptr<World> world;
-				std::reference_wrapper<LCEServer> server;
-			};
+			//	Intrusive<PlayerInterface> player;
+			//	Intrusive<World> world;
+			//	std::reference_wrapper<LCEServer> server;
+			//};
 
-			struct Quit : public IEvent {
-				IEVENT_DECLARE_EVENT_NAME("player.quit")
-				Quit(
-					const std::shared_ptr<PlayerInterface>& player,
-					const std::shared_ptr<World>& world,
-					const std::reference_wrapper<LCEServer> server
-					//const std::function<void()> denied_request_callback = nullptr
-				) : player(player), world(world), server(server) /*deniedReqCB(denied_request_callback)*/{}
+			//struct Quit : public IEvent {
+			//	IEVENT_DECLARE_EVENT_NAME("player.quit")
+			//	Quit(
+			//		const Intrusive<PlayerInterface>& player,
+			//		const Intrusive<World>& world,
+			//		const std::reference_wrapper<LCEServer> server
+			//		//const std::function<void()> denied_request_callback = nullptr
+			//	) : player(player), world(world), server(server) /*deniedReqCB(denied_request_callback)*/{}
 
-				std::shared_ptr<PlayerInterface> player;
-				std::shared_ptr<World> world;
-				std::reference_wrapper<LCEServer> server;
-				//std::function<void()> deniedReqCB;
-			};
+			//	Intrusive<PlayerInterface> player;
+			//	Intrusive<World> world;
+			//	std::reference_wrapper<LCEServer> server;
+			//	//std::function<void()> deniedReqCB;
+			//};
 		}
 	}
-
 }
+

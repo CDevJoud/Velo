@@ -22,7 +22,9 @@
 
 #define XE_ERROR 0xBADC0DE
 
-#define XE_EVENT_TYPE_LOG 0xA2942192B2001D9E //velo.event.log
+#define XE_EVENT_TYPE_LOG 0x10425aaccd622326 //velo.event.log
+#define XE_EVENT_TYPE_CLIENT_CONNECT 0xa099d62140ef66d5 //velo.event.client.connect
+#define XE_EVENT_TYPE_CLIENT_DISCONNECT 0xfdbd3cc1ca17707e //velo.event.client.disconnect
 
 #define XE_EVENT_LOG_DEBUG 0x08
 
@@ -51,6 +53,7 @@ extern "C" {
 
 	typedef XInterface XIDevice XIDevice;
 	typedef XInterface XIContext XIContext;
+	typedef XInterface XITCPClient XITCPClient;
 	typedef Xconst Xint32(XAPI_STDCALL* XI_createDeviceAndContextFn)(XIDevice**, XIContext**);
 	typedef Xconst Xint32(XAPI_STDCALL* XI_destroyDeviceAndContextFn)(XIDevice**, XIContext**);
 
@@ -61,13 +64,18 @@ extern "C" {
 		Xcstrcp language;
 		Xcstrcp sdkName;
 		Xcstrcp dependencies;
+		Xuint64* session;
 	}XAPIDescriptor;
 
-	typedef XInterface {
+	typedef struct {
 		Xint64 unused;
 	}XHQEventBus;
 
-	typedef XInterface{
+	typedef struct {
+		Xint64 unused;
+	}XHTCPClient;
+
+	typedef struct {
 		Xcstr name;
 		Xuint16 maxSize;
 	}XQEventBusDescriptor;
@@ -77,6 +85,18 @@ extern "C" {
 		Xcstr msg;
 		Xuint8 severity;
 	}XSEventLog;
+
+	typedef struct {
+		Xuint16 localPort, remotePort;
+		Xcstrcp remoteAddress;
+		XHTCPClient tcpClient;
+	}XSEventClientConnect;
+
+	typedef struct {
+		Xvoid(*addRef)(XHTCPClient client);
+		Xvoid(*release)(XITCPClient client);
+		Xuint64(*getNativeHandle)(XHTCPClient tcpClient);
+	}XITCPClientVTable;
 
 	typedef XInterface {
 		Xint32(*onShutdown)(Xvoid*);
@@ -98,8 +118,11 @@ extern "C" {
 	typedef XInterface {
 		Xvoid(*addRef)(XIContext* ctx);
 		Xvoid(*release)(XIContext* ctx);
-		Xuint32(*postEvent)(XHQEventBus* qBus, Xvoid* event, Xconst Xuint64 type);
-		Xuint32(*subscribeEvent)(XHQEventBus* qBus, Xconst Xuint64 type, Xconst Xvoid Xconstptr fn);
+		Xuint32(*postEvent)(XHQEventBus qBus, Xvoid* event, Xconst Xuint64 type);
+		Xuint32(*subscribeEvent)(XHQEventBus qBus, Xconst Xuint64 type, Xconst Xvoid Xconstptr fn);
+		Xvoid*(*memAlloc)(Xuint64 size);
+		Xvoid(*memFree)(Xvoid* mem);
+		Xconst XITCPClientVTable Xconstptr tcpClient;
 	}XIContextVTable;
 
 	XInterface XIContext{

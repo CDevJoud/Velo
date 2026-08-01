@@ -1,8 +1,11 @@
 #pragma once
 
 namespace velo {
+	template<typename T>
+	class Intrusive;
+
 	template<typename R, typename T, typename F>
-	R safe_access(const std::shared_ptr<T>& ptr, F&& fn, R fallback = R{}) {
+	R safe_access(const Intrusive<T>& ptr, F&& fn, R fallback = R{}) {
 		if (ptr) {
 			return fn(ptr);
 		}
@@ -10,7 +13,7 @@ namespace velo {
 	}
 
 	template<typename T, typename F>
-	inline void safe_access(const std::shared_ptr<T>& ptr, F&& fn) {
+	inline void safe_access(const Intrusive<T>& ptr, F&& fn) {
 		if (ptr) {
 			fn(ptr);
 		}

@@ -24,18 +24,18 @@ namespace velo {
 		const std::reference_wrapper<LCEServer>& server
 	) : server(server), qBus(qBus), qLogBus(qLogBus), name("defaultWorld") {
 		QEvent_playerQuit = qBus.get().subscribeRAII<event::player::Quit>([this](const event::player::Quit& e) {
-			std::shared_ptr<World> self = e.world;
-			std::shared_ptr<Player> _player = std::dynamic_pointer_cast<Player>(e.player);
+			Intrusive<World> self = e.world;
+			Intrusive<Player> _player = dynamicPtrCast<Player>(e.player);
 			
 			std::u16string playerUsername = _player->getUsername();
 			std::string username8(playerUsername.begin(), playerUsername.end());
-			LOG_DEBUG("Reference count of " + username8 + " set to " + std::to_string(_player.use_count()));
-			if (self.get() == this) {
+			LOG_DEBUG("Reference count of " + username8 + " set to " + std::to_string(_player->getIntrusiveCount()));
+			if (self.getRawPtr() == this) {
 				if (!safe_access<bool>(_player, [&self](const auto& p) { return p->onPlayerQuit(self); })) {
 					return; // player.onPlayerQuit() refused the quit event from this world!
 				}
 				auto it = std::find_if(self->players.begin(), self->players.end(), [_player](const auto& p) -> bool {
-					return p.lock()->getUsername() == _player->getUsername();
+					return p->getUsername() == _player->getUsername();
 					});
 				// if it does exist
 				if (it != this->players.end()) {
@@ -46,18 +46,18 @@ namespace velo {
 					// player does not exist in this world!
 					LOG_ERROR(username8 + " does not exist in " + self->name);
 				}
+				LOG_INFO("[World:" + self->name + "] " + username8 + " quit the world!");
 			}
 			});
 		QEvent_playerJoin = qBus.get().subscribeRAII<event::player::Join>([this](const event::player::Join& e) {
-			std::shared_ptr<World> self = e.world;
-			std::shared_ptr<Player> _player = std::dynamic_pointer_cast<Player>(e.player);
+			Intrusive<World> self = e.world;
+			Intrusive<Player> _player = dynamicPtrCast<Player>(e.player);
 			
-			if (self.get() == this && _player != nullptr) {
+			if (self.getRawPtr() == this && _player != nullptr) {
 				std::u16string playerUsername = _player->getUsername();
 				std::string username8(playerUsername.begin(), playerUsername.end());
 
-				LOG_DEBUG("Reference count of " + username8 + " set to " + std::to_string(_player.use_count()));
-
+				LOG_DEBUG("Reference count of " + username8 + " set to " + std::to_string(_player->getIntrusiveCount()));
 
 				if(!safe_access<bool>(_player, [&self](const auto& p) { return p->onPlayerJoin(self);})){
 					// Error 
@@ -65,7 +65,7 @@ namespace velo {
 					return;
 				}
 				auto it = std::find_if(self->players.begin(), self->players.end(), [_player](const auto& p) -> bool {
-					return p.lock()->getUsername() == _player->getUsername();
+					return p->getUsername() == _player->getUsername();
 					});
 				// if it does exist
 				if (it != this->players.end()) {
@@ -73,10 +73,10 @@ namespace velo {
 					return; // the player already exist!
 				}
 
-				auto tcpClient = safe_access<std::shared_ptr<TCPClient>>(_player, [](const auto& instance) { return instance->getTCPClient();});
+				auto tcpClient = safe_access<Intrusive<TCPClient>>(_player, [](const Intrusive<Player>& instance) { return instance->getTCPClient();});
 
 				// send chunk visibility
-				auto res = safe_access<Socket::Status>(tcpClient, [](const auto& client) { return client->send(Packet::createChunkVisibility(0, 0, true));});
+				auto res = safe_access<Socket::Status>(tcpClient, [](const Intrusive<TCPClient>& client) { return client->send(Packet::createChunkVisibility(0, 0, true));});
 				if (res == Socket::Error || res == Socket::Disconnected) {
 					LOG_ERROR("[World:" + self->name + "] I tried sending chunk visibility to " + username8 + " but it seems that the client disconnected!\n\tPreparing on handlings player disconnection!");
 					return; // Error
@@ -86,7 +86,7 @@ namespace velo {
 
 				// send other packets...
 				
-				this->players.emplace_back(_player);
+				this->players.emplace_back(_player.getRawPtr());
 				LOG_INFO("[World:" + self->name + "] " + username8 + " joined the world!");
 			}
 			});

@@ -3,9 +3,11 @@
 #include "XVAPI.h"
 #include "QEventBus.hpp"
 
-Xvoid pushQEventBus(velo::QEventBus* qBus);
-void setGlobalEventBus(velo::QEventBus* qBus);
+namespace velo {
+	Xvoid pushQEventBus(velo::QEventBus* qBus);
+	void setGlobalEventBus(velo::QEventBus* qBus);
 
 
-Xint32 velo_createDeviceAndContext(XIDevice** device, XIContext** ctx);
-Xint32 velo_destroyDeviceAndContext(XIDevice** device, XIContext** ctx);
+	Xint32 createDeviceAndContext(XIDevice** device, XIContext** ctx);
+	Xint32 destroyDeviceAndContext(XIDevice** device, XIContext** ctx);
+}

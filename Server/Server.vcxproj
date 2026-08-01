@@ -134,12 +134,16 @@
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerInterface.cpp" />
+    <ClCompile Include="PluginInterface.cpp" />
+    <ClCompile Include="PluginManager.cpp" />
+    <ClCompile Include="PluginSession.cpp" />
     <ClCompile Include="QEventBus.cpp" />
     <ClCompile Include="RLEInflateCodec.cpp" />
     <ClCompile Include="ServerInterface.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="TCPClient.cpp" />
     <ClCompile Include="TCPServer.cpp" />
+    <ClCompile Include="TUIpp.cpp" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="XVAPI_Impl.cpp" />
   </ItemGroup>
@@ -156,12 +160,17 @@
     <ClInclude Include="Packet.hpp" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="PlayerInterface.hpp" />
+    <ClInclude Include="PluginInterface.hpp" />
+    <ClInclude Include="PluginManager.hpp" />
+    <ClInclude Include="PluginSession.hpp" />
     <ClInclude Include="QEventBus.hpp" />
+    <ClInclude Include="Intrusive.hpp" />
     <ClInclude Include="RLEInflateCodec.hpp" />
     <ClInclude Include="ServerInterface.hpp" />
     <ClInclude Include="Socket.hpp" />
     <ClInclude Include="TCPClient.hpp" />
     <ClInclude Include="TCPServer.hpp" />
+    <ClInclude Include="TUIpp.hpp" />
     <ClInclude Include="typedefs.hpp" />
     <ClInclude Include="Accessors.hpp" />
     <ClInclude Include="World.hpp" />

@@ -48,6 +48,18 @@
     <ClCompile Include="XVAPI_Impl.cpp">
       <Filter>Core\Plugin</Filter>
     </ClCompile>
+    <ClCompile Include="PluginManager.cpp">
+      <Filter>Core\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="PluginSession.cpp">
+      <Filter>Core\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="PluginInterface.cpp">
+      <Filter>Core\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="TUIpp.cpp">
+      <Filter>TUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Network">
@@ -64,6 +76,9 @@
     </Filter>
     <Filter Include="Core\Plugin">
       <UniqueIdentifier>{9a421b2f-df1b-496e-bcc7-0ce2066da04d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TUI">
+      <UniqueIdentifier>{b9b5e3f7-c26e-4506-9766-09c1e0826a26}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -131,6 +146,21 @@
     </ClInclude>
     <ClInclude Include="XVAPI_Impl.hpp">
       <Filter>Core\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="Intrusive.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginManager.hpp">
+      <Filter>Core\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginInterface.hpp">
+      <Filter>Core\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginSession.hpp">
+      <Filter>Core\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="TUIpp.hpp">
+      <Filter>TUI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

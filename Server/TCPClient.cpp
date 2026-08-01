@@ -22,6 +22,8 @@ namespace velo {
 	TCPClient::TCPClient(const std::reference_wrapper<QEventBus>& qBus) : qBus(qBus) {
 		
 	}
+
+
 	Word TCPClient::getLocalPort() const {
 		if (Socket::getNativeHandle() != Socket::Invalid) {
 			struct sockaddr_in address {};

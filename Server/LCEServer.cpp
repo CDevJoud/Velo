@@ -1,4 +1,5 @@
-#include <Windows.h>
+﻿#include "TUIpp.hpp"
+
 #include "LCEServer.hpp"
 #include <thread>
 #include "Packet.hpp"
@@ -26,6 +27,37 @@ namespace velo {
 	XI_terminateFn XI_terminate;
 
 	LCEServer::LCEServer() : qBus("LCEServer"), qLogBus("LCEServerLog") {
+
+		std::thread(
+			[]() {
+				static tui::Console console(_T("main"), tui::Vec2w(240, 66), tui::Vec2w(8, 16), tui::Console::Type::NativeOS);
+
+				console.insertComponent(tui::Panel::createInstance(_T("main"), 120, 32));
+
+				auto panel = console.getComponent<tui::Panel>(_T("main"));
+				panel->setPosition(120 - 60, 32 - 16);
+				panel->setDisplayBufferSize(240, 64);
+
+				//panel->insertComponent(tui::Panel::createInstance(_T("_main"), 240, 32));
+
+				auto& prop = panel->getProperties();
+				prop.isResizable = false;
+				prop.isMovable = false;
+
+				while (console.isOpen()) {
+
+					panel->clear();
+
+					panel->renderLine(0, 0, 120, 32);
+
+					console.clear();
+
+					console.display();
+				}
+			}
+		).detach();
+
+		bool initStatue = true;
 		qBus.runAsync();
 		qLogBus.runAsync();
 		LCEServer::logger = std::make_unique<Logger>(std::ref(qLogBus));
@@ -33,7 +65,9 @@ namespace velo {
 		pushQEventBus(&qBus);
 		pushQEventBus(&qLogBus);
 
-		hMod = LoadLibraryA("DemoPlugin.dll");
+		LCEServer::initQEventBusSubscriptions();
+
+		/*hMod = LoadLibraryA("DemoPlugin.dll");
 		
 		XI_queryFn XI_query = (XI_queryFn)GetProcAddress(hMod, "XI_query");
 		
@@ -41,27 +75,33 @@ namespace velo {
 
 		XI_mainFn XI_main = (XI_mainFn)GetProcAddress(hMod, "XI_main");
 
-		XI_main(velo_createDeviceAndContext);
+		XI_main(velo::createDeviceAndContext);
 
-		XI_terminate = (XI_terminateFn)GetProcAddress(hMod, "XI_terminate");
-
-		LCEServer::initQEventBusSubscriptions();
+		XI_terminate = (XI_terminateFn)GetProcAddress(hMod, "XI_terminate");*/
 
 		LOG_INFO("Starting the server please wait...");
 		std::this_thread::sleep_for(std::chrono::milliseconds(0));
 		
+		LCEServer::plm = std::make_unique<PluginManager>(std::ref(qLogBus));
+
+		initStatue = plm->loadPlugin("DemoPlugin.dll");
+
 		LOG_INFO("Loading default world");
-		LCEServer::world = std::make_shared<World>(std::ref(qBus), std::ref(qLogBus), std::ref(*this));
+		LCEServer::world = Intrusive<World>::make(std::ref(qBus), std::ref(qLogBus), std::ref(*this));
 		LOG_INFO("Done.");
+
+		ServerInterface::bIsServerRunning = initStatue;
 	}
 	LCEServer::~LCEServer() {
-		XI_terminate(velo_destroyDeviceAndContext);
+		//XI_terminate(velo::destroyDeviceAndContext);
 		FreeLibrary(hMod);
 		qBus.stop();
 		qLogBus.stop();
 	}
-	bool LCEServer::onClientConnect(const std::shared_ptr<TCPClient>& client, std::u16string& clientUsername) {
+	bool LCEServer::onClientConnect(Intrusive<TCPClient>& client, std::u16string& clientUsername) {
 		
+		plm->callOnClientConnect(client);
+
 		Packet p;
 		std::string clientName = client->getRemoteAddress() + ":" + std::to_string(client->getRemotePort());
 		do {
@@ -111,7 +151,7 @@ namespace velo {
 		}
 		return false;
 	}
-	bool LCEServer::onClientDisconnect(const std::shared_ptr<TCPClient>& client, std::u16string& clientUsername) {
+	bool LCEServer::onClientDisconnect(Intrusive<TCPClient>& client, std::u16string& clientUsername) {
 		return false;
 	}
 	LCEServer::Config& LCEServer::getConfig() {
@@ -122,7 +162,6 @@ namespace velo {
 			LOG_FATAL(std::format("could not bind to port! {}:{}", cfg.port, cfg.ipAddress));
 			return -1;
 		}
-		ServerInterface::bIsServerRunning = true;
 		while (ServerInterface::bIsServerRunning && !ServerInterface::bIsServerQuiting) {
 			TCPClient client(std::ref(qBus));
 			auto status = TCPServer::accept(client);
@@ -133,20 +172,21 @@ namespace velo {
 		
 		return 0;
 	}
-	std::shared_ptr<World>& LCEServer::getWorld() {
+	Intrusive<World>& LCEServer::getWorld() {
 		return LCEServer::world;
 	}
 	void LCEServer::initQEventBusSubscriptions() {
 		qBus.subscribe<event::client::Connect>([](const event::client::Connect& e) {
 			std::u16string clientUsername;
-			if (!e.server.get().onClientConnect(e.tcpClient, clientUsername)) {
-				e.tcpClient->disconnect();
+			auto tcpClient = e.tcpClient;
+			if (!e.server.get().onClientConnect(tcpClient, clientUsername)) {
+				tcpClient->disconnect();
 				return;
 			}
 			// for logging!
 			QEventBus& qLogBus = e.server.get().qLogBus;
 
-			std::shared_ptr<Player> player = std::make_shared<Player>(
+			Intrusive<Player> player = Intrusive<Player>::make(
 				e.tcpClient, 0, clientUsername, 
 				e.server.get().qBus, e.server.get().qLogBus, e.server
 			);
@@ -156,21 +196,21 @@ namespace velo {
 
 			e.server.get().insertPlayer(
 				clientUsername,
-				player
+				dynamicPtrCast<PlayerInterface>(player)
 			);
 
 			LOG_INFO("@velo: inserted the player " + clientUsername8 + " to server registry!");
 
 			if (e.tcpClient->getNativeHandle() != Socket::Invalid) {
 				e.server.get().qBus.post(event::player::Connect(
-					player,
+					dynamicPtrCast<PlayerInterface>(player),
 					clientUsername,
 					e.server
 				));
 				
 				std::thread(
 					Player::handleConnection,
-					std::dynamic_pointer_cast<Player>(
+					dynamicPtrCast<Player>(
 						e.server.get().getPlayer(clientUsername)
 					)
 				).detach();
@@ -184,7 +224,8 @@ namespace velo {
 			});
 		qBus.subscribe<event::client::Disconnect>([](const event::client::Disconnect& e) {
 			std::u16string placeholder = u"";
-			e.server.get().onClientDisconnect(e.tcpClient, placeholder);
+			auto tcpClient = e.tcpClient;
+			e.server.get().onClientDisconnect(tcpClient, placeholder);
 			});
 	}
 	void LCEServer::handleIncomingConnection(TCPClient& client) {
@@ -208,6 +249,6 @@ namespace velo {
 			return;
 		}
 		LOG_INFO("@velo: New client connected!");
-		qBus.post<event::client::Connect>(event::client::Connect(std::make_shared<TCPClient>(std::move(client)), std::ref<LCEServer>(*this)));
+		qBus.post<event::client::Connect>(event::client::Connect(Intrusive<TCPClient>::make(std::move(client)), std::ref<LCEServer>(*this)));
 	}
 }
