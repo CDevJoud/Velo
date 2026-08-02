@@ -1480,6 +1480,7 @@ namespace tui {
 		switch (nMsg) {
 		case WM_KEYDOWN:
 		{
+			if (wParam == 0x10) wParam = VK_LSHIFT;
 			cie.m_KeyboardCondition[wParam].bStrokePressed = TRUE;
 			cie.m_KeyboardCondition[wParam].bStrokeIsHeld = TRUE;
 			cie.m_KeyboardCondition[wParam].bStrokeReleased = FALSE;
@@ -1487,6 +1488,7 @@ namespace tui {
 		}
 		case WM_KEYUP:
 		{
+			if (wParam == 0x10) wParam = VK_LSHIFT;
 			cie.m_KeyboardCondition[wParam].bStrokePressed = FALSE;
 			cie.m_KeyboardCondition[wParam].bStrokeIsHeld = FALSE;
 			cie.m_KeyboardCondition[wParam].bStrokeReleased = TRUE;
@@ -1551,6 +1553,17 @@ namespace tui {
 			cie.resize.y = HIWORD(lParam) / shared::pxlDimension.y;
 			break;
 		}
+		case WM_CHAR:
+		{
+			cie.textChar = (Int16)wParam;
+			break;
+		}
+		case WM_MOUSEWHEEL:
+		{
+			cie.mouseScroll = GET_WHEEL_DELTA_WPARAM(wParam);
+			break;
+		}
+
 		default:
 			break;
 		}
@@ -2087,7 +2100,8 @@ namespace tui {
 
 
 
-	 Intrusive<Component> Panel::createInstance(const String& title, const Word& width, const Word& height) {
+
+     Intrusive<Component> Panel::createInstance(const String& title, const Word& width, const Word& height) {
 		auto comp = Intrusive<Panel>::make(title, width, height);
 		if (comp->getRenderElement().screenBuffer == nullptr) {
 			return nullptr;
@@ -2122,6 +2136,9 @@ namespace tui {
 		if (cType == Component::Panel) {
 			components.push_back(comp);
 		}
+		else if (cType == Component::InputBox) {
+			components.push_back(comp);
+		}
 		return true;
 	}
 
@@ -2147,7 +2164,7 @@ namespace tui {
 			}
 		}
 
-		Panel::targeted = Panel::isHovering;
+		Panel::targeted = Panel::bIsHovering;
 
 		if (Panel::props.isResizable) {
 			//Resizable logic
@@ -2304,10 +2321,10 @@ namespace tui {
 				Word(mPos.y - pPosition.y)
 			};
 
-			Panel::isHovering = true;
+			Panel::bIsHovering = true;
 		}
 		else {
-			Panel::isHovering = false;
+			Panel::bIsHovering = false;
 		}
 
 		// Handle Mouse press events
@@ -2334,41 +2351,56 @@ namespace tui {
 
 		if (Panel::targeted) {
 			
+			
+
 			const Int32 viewport = panelRect.height;
 			const Int32 content = (Int32)Panel::getDisplayBufferSize().y;
 
 			const Int32 maxScroll = std::max(0, content - viewport);
 
 			if (maxScroll > 0) {
-				const Int32 thumbHeight = std::max(1, viewport * viewport / content);
 
-				const Int32 thumbTravel = std::max(1, viewport - thumbHeight);
-
-				const Int32 thumbY = verticalScroll * thumbTravel / maxScroll;
-
-				const bool onThumb = local.x == panelRect.width &&
-					local.y >= thumbY &&
-					local.y < thumbY + thumbHeight;
-
-				if (mouseState.bStrokePressed && onThumb) {
-					isDraggingScrollBar = true;
-
-					dragStartY = local.y - thumbY;
+				if(!ep.m_KeyboardCondition[VK_LSHIFT].bStrokeIsHeld)
+				{
+					if (ep.mouseScroll < 0) {
+						verticalScroll++;
+						verticalScroll = std::clamp(verticalScroll, 0, maxScroll);
+					}
+					else if (ep.mouseScroll > 0) {
+						verticalScroll--;
+						verticalScroll = std::clamp(verticalScroll, 0, maxScroll);
+					}
 				}
 
-				if (mouseState.bStrokeReleased) {
-					isDraggingScrollBar = false;
-				}
+				//const Int32 thumbHeight = std::max(1, viewport * viewport / content);
 
-				if (isDraggingScrollBar && mouseState.bStrokeIsHeld) {
-					Int32 newThumbY = local.y - dragStartY;
+				//const Int32 thumbTravel = std::max(1, viewport - thumbHeight);
 
-					newThumbY = std::clamp(newThumbY, 0, thumbTravel);
+				//const Int32 thumbY = verticalScroll * thumbTravel / maxScroll;
 
-					verticalScroll = newThumbY * maxScroll / thumbTravel;
+				//const bool onThumb = local.x == panelRect.width &&
+				//	local.y >= thumbY &&
+				//	local.y < thumbY + thumbHeight;
 
-					verticalScroll = std::clamp(verticalScroll, 0, maxScroll);
-				}
+				//if (mouseState.bStrokePressed && onThumb) {
+				//	isDraggingScrollBar = true;
+
+				//	dragStartY = local.y - thumbY;
+				//}
+
+				//if (mouseState.bStrokeReleased) {
+				//	isDraggingScrollBar = false;
+				//}
+
+				//if (isDraggingScrollBar && mouseState.bStrokeIsHeld) {
+				//	Int32 newThumbY = local.y - dragStartY;
+
+				//	newThumbY = std::clamp(newThumbY, 0, thumbTravel);
+
+				//	verticalScroll = newThumbY * maxScroll / thumbTravel;
+
+				//	verticalScroll = std::clamp(verticalScroll, 0, maxScroll);
+				//}
 			}
 
 			// horizontal scrollbar
@@ -2378,57 +2410,67 @@ namespace tui {
 			const int maxHorizontalScroll = std::max(0, contentWidth - viewportWidth);
 
 			if (maxHorizontalScroll > 0) {
-				const int thumbWidth =
-					std::max(1, viewportWidth * viewportWidth / contentWidth);
 
-				const int thumbTravel =
-					viewportWidth - thumbWidth;
-
-				const int thumbX =
-					(horizontalScroll * thumbTravel) / maxHorizontalScroll;
-
-
-				// Mouse is on the horizontal thumb
-				const bool onThumb =
-					local.y == panelRect.height&&
-					local.x >= thumbX &&
-					local.x < thumbX + thumbWidth;
-
-
-				if (mouseState.bStrokePressed && onThumb) {
-					isDraggingHScrollBar = true;
-
-					// Keep the click position inside the thumb
-					dragStartX = local.x - thumbX;
+				if (ep.m_KeyboardCondition[VK_LSHIFT].bStrokeIsHeld) {
+					if (ep.mouseScroll < 0) {
+						horizontalScroll++;
+						horizontalScroll = std::clamp(horizontalScroll, 0, maxHorizontalScroll);
+					}
+					else if (ep.mouseScroll > 0) {
+						horizontalScroll--;
+						horizontalScroll = std::clamp(horizontalScroll, 0, maxHorizontalScroll);
+					}
 				}
 
+				//const int thumbWidth =
+				//	std::max(1, viewportWidth * viewportWidth / contentWidth);
 
-				if (mouseState.bStrokeReleased) {
-					isDraggingHScrollBar = false;
-				}
+				//const int thumbTravel =
+				//	viewportWidth - thumbWidth;
 
-
-				if (isDraggingHScrollBar && mouseState.bStrokeIsHeld) {
-					int newThumbX = local.x - dragStartX;
-
-					newThumbX = std::clamp(
-						newThumbX,
-						0,
-						thumbTravel
-					);
+				//const int thumbX =
+				//	(horizontalScroll * thumbTravel) / maxHorizontalScroll;
 
 
-					horizontalScroll =
-						newThumbX * maxHorizontalScroll / thumbTravel;
+				//// Mouse is on the horizontal thumb
+				//const bool onThumb =
+				//	local.y == panelRect.height&&
+				//	local.x >= thumbX &&
+				//	local.x < thumbX + thumbWidth;
 
 
-					horizontalScroll =
-						std::clamp(
-							horizontalScroll,
-							0,
-							maxHorizontalScroll
-						);
-				}
+				//if (mouseState.bStrokePressed && onThumb) {
+				//	isDraggingHScrollBar = true;
+
+				//	// Keep the click position inside the thumb
+				//	dragStartX = local.x - thumbX;
+				//}
+
+				//if (mouseState.bStrokeReleased) {
+				//	isDraggingHScrollBar = false;
+				//}
+
+				//if (isDraggingHScrollBar && mouseState.bStrokeIsHeld) {
+				//	int newThumbX = local.x - dragStartX;
+
+				//	newThumbX = std::clamp(
+				//		newThumbX,
+				//		0,
+				//		thumbTravel
+				//	);
+
+
+				//	horizontalScroll =
+				//		newThumbX * maxHorizontalScroll / thumbTravel;
+
+
+				//	horizontalScroll =
+				//		std::clamp(
+				//			horizontalScroll,
+				//			0,
+				//			maxHorizontalScroll
+				//		);
+				//}
 			}
 		}
 	}
@@ -2560,6 +2602,123 @@ namespace tui {
 		out->setPixel(rect.x + rect.width, rect.y + rect.height, 0x256F, color);
 	}
 
+	 InputBox::InputBox() : isInputting(false), type(Type::String), strInput(_T("")) {
+		 Component::setComponentType(Component::Type::InputBox);
+	 }
+
+	 InputBox::InputBox(const String& title, const Word& width, const Word& height) : 
+		Panel(title, width, height),
+		isInputting(false), type(Type::String), strInput(_T("")) {
+		Component::setComponentType(Component::Type::InputBox);
+
+	 }
+
+	 InputBox::InputBox(const String& title, const String& inputValue, const Word& width, const Word& height) :
+		 Panel(title, width, height),
+		 isInputting(false), type(Type::String), strInput(inputValue) {
+		 Component::setComponentType(Component::Type::InputBox);
+	 }
+
+	 InputBox::~InputBox() {
+	 
+	 }
+
+	 void InputBox::onRender(RenderTarget* out) {
+		 Panel::onRender(out);
+		 RenderTarget::clear();
+		 Int32 fullSize = RenderTarget::re.viewport.width * RenderTarget::re.viewport.height;
+		 if (InputBox::type == InputBox::Type::Password) {
+			 
+			 for (Int32 i = 0; i < strInput.length(); i++) {
+				 if (fullSize > i) {
+					 RenderTarget::re.screenBuffer[i].pixel.unicodeChar = '*';
+					 RenderTarget::re.screenBuffer[i].attrib = 0x0F;
+				 }
+			 }
+		 }
+		 else {
+			 for (Int32 i = 0; i < strInput.length(); i++) {
+				 if (fullSize > i) {
+					 RenderTarget::re.screenBuffer[i].pixel.unicodeChar = (Int16)strInput[i];
+					 RenderTarget::re.screenBuffer[i].attrib = 0x0F;
+				 }
+			 }
+		 }
+		 if (fullSize > strInput.length()) {
+			 RenderTarget::re.screenBuffer[strInput.length()].pixel.unicodeChar = '|';
+			 RenderTarget::re.screenBuffer[strInput.length()].attrib = 0x0F;
+		 }
+	 }
+
+	 void InputBox::onUpdate(const ConsoleInputEvents& cie) {
+		 Panel::onUpdate(cie);
+
+		 this->isInputting = Panel::isFocused();
+		 Int32 fullSize = RenderTarget::re.viewport.width * RenderTarget::re.viewport.height - 1;
+		 if (this->isInputting) {
+			 Int16 c = cie.textChar;
+
+			 if (c != 0) {
+				 if (c == VK_BACK) {
+					 if (!strInput.empty())
+						 strInput.pop_back();
+				 }
+				 else {
+					 switch (InputBox::type) {
+					 case InputBox::Type::String:
+					 case InputBox::Type::Password:
+						 if (fullSize >= strInput.length() ) {
+							 strInput += c;
+						 }
+						 break;
+
+					 case InputBox::Type::Decimal:
+					 case InputBox::Type::Number:
+					 {
+						 if (std::isdigit(c) || c == '.') {
+							 if (c == '.') {
+								 if (strInput.find('.') == String::npos) {
+									 if (fullSize >= strInput.length()) {
+										 strInput += c;
+									 }
+								 }
+							 }
+							 else {
+								 if (fullSize >= strInput.length()) {
+									 strInput += c;
+								 }
+							 }
+						 }
+						 break;
+					 }
+					 default:
+						 break;
+					 }
+				 }
+			 }
+		 }
+	 }
+
+	 Intrusive<Component> InputBox::createInstance(const String& title, const Word& width, const Word& height) {
+		 auto comp = Intrusive<InputBox>::make(title, width, height);
+
+		 comp->setPosition(1, 1);
+		 auto& prop = comp->getProperties();
+		 prop.isResizable = false;
+		 prop.isMovable = false;
+		 return tui::dynamicPtrCast<Component>(comp);
+	 }
+
+	 Intrusive<Component> InputBox::createInstance(const String& title, const String& inputValue, const Word& width, const Word& height) {
+		 auto comp = Intrusive<InputBox>::make(title, inputValue, width, height);
+
+		 comp->setPosition(1, 1);
+		 auto& prop = comp->getProperties();
+		 prop.isResizable = false;
+		 prop.isMovable = false;
+		 return tui::dynamicPtrCast<Component>(comp);
+	 }
+
 	 Console::Console(const String& title, const Vec2<Word>& dimension, const Vec2<Word>& pxlDimension, Type type) :
 		interface(nullptr), type(type) {
 		shared::pxlDimension = pxlDimension;
@@ -2674,6 +2833,8 @@ namespace tui {
 
 			comp->onRender(this);
 		}
+		eventProcessor->cie.textChar = 0;
+		eventProcessor->cie.mouseScroll = 0;
 		Console::setPixel(eventProcessor->getMousePos());
 		if (Console::interface != nullptr) {
 			Console::interface->display(re);

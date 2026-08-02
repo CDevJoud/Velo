@@ -459,6 +459,9 @@ namespace tui {
 
 		Vec2<Word> resize;
 		bool resized;
+
+		Int16 textChar;
+		Int32 mouseScroll; // + is scrolling up, - is scrolling down
 	};
 
 	class EventProcessorInterface {
@@ -854,6 +857,8 @@ namespace tui {
 		void setDisplayBufferSize(const Vec2w& size);
 
 		Vec2w getDisplayBufferSize() const;
+
+		bool isFocused() const { return Panel::targeted; }
 	protected:
 		void setUpFrame(RenderTarget* out, Rect<Word>rect, Word color);
 	private:
@@ -873,7 +878,7 @@ namespace tui {
 			const Vec2<Int16>& mPos);
 
 		std::vector<Intrusive<Component>> components;
-		bool isDragging = false, resizeDragging = true, isHovering = false, targeted = false, isDraggingScrollBar = false, isDraggingHScrollBar = true;
+		bool isDragging = false, resizeDragging = true, bIsHovering = false, targeted = false, isDraggingScrollBar = false, isDraggingHScrollBar = true;
 
 		bool		   isResizingRight : 1;
 		bool		   isResizingLeft : 1;
@@ -901,13 +906,23 @@ namespace tui {
 		InputBox();
 		InputBox(const String& title, const Word& width, const Word& height);
 		InputBox(const String& title, const String& inputValue, const Word& width, const Word& height);
+		~InputBox();
+
 
 		void onRender(RenderTarget* out) override;
 		void onUpdate(const ConsoleInputEvents& cie) override;
 
 		static Intrusive<Component> createInstance(const String& title, const Word& width, const Word& height);
+		static Intrusive<Component> createInstance(const String& title, const String& inputValue, const Word& width, const Word& height);
 
-		~InputBox();
+		void setInputType(Type type) { InputBox::type = type; }
+		String getInputValue() const { return InputBox::strInput; }
+
+		Panel& getPanel() { return *this; }
+	private:
+		String strInput;
+		bool isInputting;
+		Type type;
 	};
 
 	class Console : public RenderTarget, public IntrusiveCounted {
