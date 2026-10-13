@@ -28,35 +28,6 @@ namespace velo {
 
 	LCEServer::LCEServer() : qBus("LCEServer"), qLogBus("LCEServerLog") {
 
-		std::thread(
-			[]() {
-				static tui::Console console(_T("main"), tui::Vec2w(240, 66), tui::Vec2w(8, 16), tui::Console::Type::NativeOS);
-
-				console.insertComponent(tui::Panel::createInstance(_T("main"), 120, 32));
-
-				auto panel = console.getComponent<tui::Panel>(_T("main"));
-				panel->setPosition(120 - 60, 32 - 16);
-				panel->setDisplayBufferSize(240, 64);
-
-				//panel->insertComponent(tui::Panel::createInstance(_T("_main"), 240, 32));
-
-				auto& prop = panel->getProperties();
-				prop.isResizable = false;
-				prop.isMovable = false;
-
-				while (console.isOpen()) {
-
-					panel->clear();
-
-					panel->renderLine(0, 0, 120, 32);
-
-					console.clear();
-
-					console.display();
-				}
-			}
-		).detach();
-
 		bool initStatue = true;
 		qBus.runAsync();
 		qLogBus.runAsync();

@@ -230,11 +230,13 @@ namespace tui {
 		this->stretch = false;
 		this->prevBuffer = nullptr;
 		this->eventProcessor = ep;
+		ZeroMemory(&gl, sizeof(GL));
 		using CW = ConsoleWindow_ImplWin32GL_1_1;
 		if (CW::initWindowClass()) {
 			if (CW::createWindowInstance(title, dimension)) {
 				if (CW::initGL_1_1()) {
 
+					
 					//hBlankCursor = CW::createBlankCursor();
 					ShowCursor(FALSE);
 
@@ -476,7 +478,7 @@ namespace tui {
 		//
 		// Splash screen (first 3 seconds)
 		//
-		if (elapsedSeconds <= 0.5) {
+		if (elapsedSeconds <= 3.5) {
 			gl.Enable(gl.texture_2d);
 
 			gl.Enable(gl.blend);
@@ -1265,7 +1267,9 @@ namespace tui {
 
 			case WM_SIZE:
 			{
-				console->gl.Viewport(0, 0, LOWORD(lParam), HIWORD(lParam));
+				if (console->gl.Viewport != nullptr) {
+					console->gl.Viewport(0, 0, LOWORD(lParam), HIWORD(lParam));
+				}
 				console->dimension.x = LOWORD(lParam);
 				console->dimension.y = HIWORD(lParam);
 				break;
@@ -1298,6 +1302,7 @@ namespace tui {
 		this->nwh = CreateWindowW(L"TUIPP:ConsoleWindow_ImplWin32GL_1_1", (PWCHAR)title.c_str(), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, dimension.x, dimension.y, nullptr, nullptr, GetModuleHandleW(nullptr), this);
 #endif
 		if (this->nwh == nullptr) MessageBox(nullptr, TEXT("Could not Create Window!"), TEXT("Error"), MB_OK | MB_ICONERROR);
+		
 		return (nwh != nullptr);
 	}
 
@@ -2101,6 +2106,7 @@ namespace tui {
 
 
 
+
      Intrusive<Component> Panel::createInstance(const String& title, const Word& width, const Word& height) {
 		auto comp = Intrusive<Panel>::make(title, width, height);
 		if (comp->getRenderElement().screenBuffer == nullptr) {
@@ -2587,20 +2593,21 @@ namespace tui {
 	 }
 
 	 void Panel::setUpFrame(RenderTarget* out, Rect<Word> rect, Word color) {
+		 if (Panel::props.hasFrame) {
+			 out->renderLine(rect.x - 1, rect.y - 1, rect.x + rect.width, rect.y - 1, 0x2500, color);
 
-		out->renderLine(rect.x - 1, rect.y - 1, rect.x + rect.width, rect.y - 1, 0x2500, color);
+			 out->renderLine(rect.x - 1, rect.y - 1, rect.x - 1, rect.y + rect.height - 1, 0x2502, color);
 
-		out->renderLine(rect.x - 1, rect.y - 1, rect.x - 1, rect.y + rect.height - 1, 0x2502, color);
+			 out->renderLine(rect.x - 1, rect.y + rect.height, rect.x + rect.width, rect.y + rect.height, 0x2500, color);
 
-		out->renderLine(rect.x - 1, rect.y + rect.height, rect.x + rect.width, rect.y + rect.height, 0x2500, color);
+			 out->renderLine(rect.x + rect.width, rect.y - 1, rect.x + rect.width, rect.y + rect.height - 1, 0x2502, color);
 
-		out->renderLine(rect.x + rect.width, rect.y - 1, rect.x + rect.width, rect.y + rect.height - 1, 0x2502, color);
-
-		out->setPixel(rect.x - 1, rect.y - 1, 0x256D, color);
-		out->setPixel(rect.x + rect.width, rect.y - 1, 0x256E, color);
-		out->setPixel(rect.x - 1, rect.y + rect.height, 0x2570, color);
-		out->setPixel(rect.x + rect.width, rect.y + rect.height, 0x256F, color);
-	}
+			 out->setPixel(rect.x - 1, rect.y - 1, 0x256D, color);
+			 out->setPixel(rect.x + rect.width, rect.y - 1, 0x256E, color);
+			 out->setPixel(rect.x - 1, rect.y + rect.height, 0x2570, color);
+			 out->setPixel(rect.x + rect.width, rect.y + rect.height, 0x256F, color);
+		 }
+	 }
 
 	 InputBox::InputBox() : isInputting(false), type(Type::String), strInput(_T("")) {
 		 Component::setComponentType(Component::Type::InputBox);
@@ -2625,14 +2632,14 @@ namespace tui {
 
 	 void InputBox::onRender(RenderTarget* out) {
 		 Panel::onRender(out);
-		 RenderTarget::clear();
+		 RenderTarget::clear(0x2588, props.color);
 		 Int32 fullSize = RenderTarget::re.viewport.width * RenderTarget::re.viewport.height;
 		 if (InputBox::type == InputBox::Type::Password) {
 			 
 			 for (Int32 i = 0; i < strInput.length(); i++) {
 				 if (fullSize > i) {
 					 RenderTarget::re.screenBuffer[i].pixel.unicodeChar = '*';
-					 RenderTarget::re.screenBuffer[i].attrib = 0x0F;
+					 RenderTarget::re.screenBuffer[i].attrib = props.txtColor;
 				 }
 			 }
 		 }
@@ -2640,13 +2647,15 @@ namespace tui {
 			 for (Int32 i = 0; i < strInput.length(); i++) {
 				 if (fullSize > i) {
 					 RenderTarget::re.screenBuffer[i].pixel.unicodeChar = (Int16)strInput[i];
-					 RenderTarget::re.screenBuffer[i].attrib = 0x0F;
+					 RenderTarget::re.screenBuffer[i].attrib = props.txtColor;
 				 }
 			 }
 		 }
 		 if (fullSize > strInput.length()) {
-			 RenderTarget::re.screenBuffer[strInput.length()].pixel.unicodeChar = '|';
-			 RenderTarget::re.screenBuffer[strInput.length()].attrib = 0x0F;
+			 if (Panel::isFocused()) {
+				 RenderTarget::re.screenBuffer[strInput.length()].pixel.unicodeChar = '|';
+				 RenderTarget::re.screenBuffer[strInput.length()].attrib = props.txtColor;
+			 }
 		 }
 	 }
 
@@ -2699,11 +2708,15 @@ namespace tui {
 		 }
 	 }
 
+	 InputBox::Properties& InputBox::getProperties() {
+		 return props;
+	 }
+
 	 Intrusive<Component> InputBox::createInstance(const String& title, const Word& width, const Word& height) {
 		 auto comp = Intrusive<InputBox>::make(title, width, height);
 
 		 comp->setPosition(1, 1);
-		 auto& prop = comp->getProperties();
+		 auto& prop = comp->getPanel().getProperties();
 		 prop.isResizable = false;
 		 prop.isMovable = false;
 		 return tui::dynamicPtrCast<Component>(comp);
@@ -2713,10 +2726,64 @@ namespace tui {
 		 auto comp = Intrusive<InputBox>::make(title, inputValue, width, height);
 
 		 comp->setPosition(1, 1);
-		 auto& prop = comp->getProperties();
+		 auto& prop = comp->getPanel().getProperties();
 		 prop.isResizable = false;
 		 prop.isMovable = false;
 		 return tui::dynamicPtrCast<Component>(comp);
+	 }
+
+	 TextBox::TextBox() {
+	 
+	 }
+
+	 TextBox::TextBox(const String& title, const Word& width, const Word& height) : 
+		Panel(title, width, height) {
+		
+	 }
+
+	 TextBox::~TextBox() {
+	 
+	 }
+
+	 Intrusive<Component> TextBox::createInstance(const String& title, const Word& width, const Word& height) {
+		 auto comp = Intrusive<TextBox>::make(title, width, height);
+		 comp->setPosition(1, 1);
+		 return dynamicPtrCast<Component>(comp);
+	 }
+
+	 void TextBox::onRender(RenderTarget* out) {
+		 
+		 RenderTarget::clear(0x2588, 0x11);
+
+		 Int32 y = 0;
+		 for (auto& line : textData) {
+
+			 RenderTarget::renderText(4, y++, line, 0x1F);
+		 }
+
+		 Panel::onRender(out);
+	 }
+
+
+	 void TextBox::onUpdate(const ConsoleInputEvents& cie) {
+		 Panel::onUpdate(cie);
+	 }
+
+     void TextBox::setInnerTextData(const String& data) {
+		 std::basic_istringstream<Tchar, std::char_traits<Tchar>, std::allocator<Tchar>> ss(data);
+
+		 String line = _T("");
+
+		 while (std::getline(ss, line, _T('\n'))) {
+			 textData.push_back(line);
+			 line = _T("");
+		 }
+
+		
+	 }
+
+	 void TextBox::addLine(const String& data) {
+		 textData.push_back(data);
 	 }
 
 	 Console::Console(const String& title, const Vec2<Word>& dimension, const Vec2<Word>& pxlDimension, Type type) :

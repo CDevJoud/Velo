@@ -71,6 +71,7 @@
 #include <functional>
 #include <atomic>
 #include <algorithm>
+#include <sstream>
 namespace tui {
 #if defined(TUIPP_USE_UTF8_STRING)
 	using String = std::u8string;
@@ -118,6 +119,18 @@ namespace tui {
 #else
 	using NativeHandle = void*;
 #endif
+#ifdef TUIPP_USE_UTF8_STRING
+	typedef char Tchar;
+#endif
+#ifdef TUIPP_USE_UTF16_STRING
+	typedef char16_t Tchar;
+#endif
+#ifdef TUIPP_USE_UTF32_STRING
+	typedef char32_t Tchar;
+#endif
+
+
+
 	template<typename T>
 	class Vec2 {
 	public:
@@ -467,8 +480,8 @@ namespace tui {
 	class EventProcessorInterface {
 		friend class EventProcessor_ImplNativeWin32; friend class Console; friend class EventProcessor_ImplWin32;
 		NativeHandle hInput; // Handle to the console input.
-		ConsoleInputEvents cie;
 	public:
+		ConsoleInputEvents cie;
 
 		virtual Int64 processEvents_Win32Proc(NativeHandle nwh, Uint32 nMsg, Uint64 wParam, Int64 lParam) { return 0; };
 		virtual void processEvents() {};
@@ -817,9 +830,10 @@ namespace tui {
 		};
 
 		struct Properties {
-			Properties() :isResizable(true), isMovable(true) {}
+			Properties() :isResizable(true), isMovable(true), hasFrame(true) {}
 			bool isResizable : 1;
 			bool isMovable : 1;
+			bool hasFrame : 1;
 			Int16 titleAlignmentOffset = 0;
 			TitleAlignment titleAlignment = TitleAlignment::Center;
 			String title = _T("");
@@ -903,14 +917,21 @@ namespace tui {
 			Decimal = 3,
 			Password = 4
 		};
+
+		struct Properties {
+			Properties() : color(0x11), txtColor(0x1F) {}
+			Byte color, txtColor;
+		};
+
 		InputBox();
 		InputBox(const String& title, const Word& width, const Word& height);
 		InputBox(const String& title, const String& inputValue, const Word& width, const Word& height);
 		~InputBox();
 
-
 		void onRender(RenderTarget* out) override;
 		void onUpdate(const ConsoleInputEvents& cie) override;
+
+		InputBox::Properties& getProperties();
 
 		static Intrusive<Component> createInstance(const String& title, const Word& width, const Word& height);
 		static Intrusive<Component> createInstance(const String& title, const String& inputValue, const Word& width, const Word& height);
@@ -923,6 +944,33 @@ namespace tui {
 		String strInput;
 		bool isInputting;
 		Type type;
+		InputBox::Properties props;
+	};
+	
+	class TextBox : public Panel {
+	public:
+		enum class Type {
+			None = 0,
+			Read = 1,
+			Write = 2
+		};
+
+		TextBox();
+		TextBox(const String& title, const Word& width, const Word& height);
+		~TextBox();
+
+		static Intrusive<Component> createInstance(const String& title, const Word& width, const Word& height);
+
+		void onRender(RenderTarget* out) override;
+		void onUpdate(const ConsoleInputEvents& cie) override;
+
+		void setInnerTextData(const String& data);
+		void addLine(const String& data);
+
+		Panel& getPanel() { return *this; }
+	private:
+		std::vector<String> textData;
+
 	};
 
 	class Console : public RenderTarget, public IntrusiveCounted {
