@@ -7,6 +7,7 @@ set(EASTL_SOURCES
 	${CMAKE_SOURCE_DIR}/libs/eastl/EASprintfCore.cpp
 	${CMAKE_SOURCE_DIR}/libs/eastl/EAStdC.cpp
 	${CMAKE_SOURCE_DIR}/libs/eastl/EAString.cpp
+	${CMAKE_SOURCE_DIR}/libs/eastl/assert.cpp
 )
 add_library(eastl STATIC ${EASTL_SOURCES})
 target_include_directories(eastl PUBLIC ${CMAKE_SOURCE_DIR}/libs/eastl)
