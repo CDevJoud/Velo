@@ -1,14 +1,13 @@
 #include "Network/TCPClient.hpp"
-
 #include "Platform.hpp"
 
 #if defined(VELO_PLATFORM_WINDOWS)
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <Windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 
 #pragma comment(lib, "WS2_32.lib")
 
@@ -36,15 +35,14 @@
 #include <EASTL/fixed_vector.h>
 
 #include <sstream>
-
 namespace velo::net {
 	TCPClient::TCPClient(const std::reference_wrapper<core::QEventBus>& qLogBus) : qLogBus(qLogBus) {}
 
 	u16 TCPClient::getLocalPort() const {
-		if (Socket::getNativeHandle() != Socket::Invalid) {
+		if (getNativeHandle() != Socket::Invalid) {
 			struct sockaddr_in address {};
-			i32 size = sizeof(address);
-			if (getsockname(Socket::getNativeHandle(), (sockaddr*)&address, &size) != -1) {
+			platform::socklen_type size = sizeof(address);
+			if (getsockname(getNativeHandle(), (sockaddr*)&address, &size) != -1) {
 				return ntohs(address.sin_port);
 			}
 		}
@@ -52,11 +50,11 @@ namespace velo::net {
 	}
 
 	const eastl::string TCPClient::getRemoteAddress() const {
-		if (Socket::getNativeHandle() != Socket::Invalid) {
-			SOCKADDR_IN address{};
-			i32 size = sizeof(address);
+		if (getNativeHandle() != Socket::Invalid) {
+			sockaddr_in address{};
+			platform::socklen_type size = sizeof(address);
 
-			if (getpeername(Socket::getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) == 0) {
+			if (getpeername(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) == 0) {
 				char ipBuffer[INET_ADDRSTRLEN];
 
 				if (inet_ntop(AF_INET, &address.sin_addr, ipBuffer, sizeof(ipBuffer))) {
@@ -64,13 +62,14 @@ namespace velo::net {
 				}
 			}
 		}
+		return eastl::string();
 	}
 
 	u16 TCPClient::getRemotePort() const {
-		if (Socket::getNativeHandle() != Socket::Invalid) {
-			SOCKADDR_IN address{};
-			i32 size = sizeof(address);
-			if (getpeername(Socket::getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1) {
+		if (getNativeHandle() != Socket::Invalid) {
+			sockaddr_in address{};
+			platform::socklen_type size = sizeof(address);
+			if (getpeername(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1) {
 				return ntohs(address.sin_port);
 			}
 		}
@@ -79,29 +78,29 @@ namespace velo::net {
 	}
 
 	void TCPClient::disconnect() {
-		Socket::close();
+		close();
 	}
 
 	Socket::Status TCPClient::send(const void* data, u64 size, u64& sent) {
 		if (!data || (size == 0)) {
 			//LOG_ERROR_TRACE("Empty 'data' or 'size == 0'")
-			return Status::Error;
+			return Socket::Status::Error;
 		}
 
 		i32 result = 0;
 		for (sent = 0; sent < size; sent += static_cast<u64>(result)) {
-			result = static_cast<i32>(::send(Socket::getNativeHandle(), static_cast<const char*>(data), static_cast<i32>(size - sent), 0));
+			result = static_cast<i32>(::send(getNativeHandle(), static_cast<const char*>(data), static_cast<i32>(size - sent), 0));
 
 			if (result < 0) {
-				Status status = Socket::getErrorStatus();
-				if ((status == NotReady) && sent) {
-					return Partial;
+				Socket::Status status = getErrorStatus();
+				if ((status == Socket::NotReady) && sent) {
+					return Socket::Partial;
 				}
 
 				return status;
 			}
 		}
-		return Status::Done;
+		return Socket::Status::Done;
 	}
 
 	Socket::Status TCPClient::send(const Http& http) {
@@ -119,13 +118,13 @@ namespace velo::net {
 		u64 sent = 0;
 		/*u64 amountSent = 0;
 		do {
-			status = TCPClient::send(res.data() + amountSent, res.size(), sent);
+			status = send(res.data() + amountSent, res.size(), sent);
 			if (status == Socket::Error) {
 				return Socket::Error;
 			}
 			amountSent += sent;
 		} while (sent == amountSent);*/
-		status = TCPClient::send(res.data(), res.size(), sent);
+		status = send(res.data(), res.size(), sent);
 		return status;
 	}
 
@@ -133,23 +132,23 @@ namespace velo::net {
 		received = 0;
 		if (!data) {
 			//LOG_ERROR_TRACE("Invalid data! data is nullptr");
-			return Status::Error;
+			return Socket::Status::Error;
 		}
 
-		if (Socket::getNativeHandle() == Socket::Invalid) {
+		if (getNativeHandle() == Socket::Invalid) {
 			//LOG_ERROR_TRACE("[TCPClient] my socket is Invalid! you forgot to create me? or used after free?");
-			return Status::Error;
+			return Socket::Status::Error;
 		}
 
-		const i32 sizerecv = static_cast<i32>(recv(Socket::getNativeHandle(), static_cast<char*>(data), static_cast<i32>(size), 0));
+		const i32 sizerecv = static_cast<i32>(recv(getNativeHandle(), static_cast<char*>(data), static_cast<i32>(size), 0));
 		received = sizerecv;
 		if (sizerecv > 0) {
-			return Status::Done;
+			return Socket::Status::Done;
 		}
 		if (sizerecv == 0) {
-			return Status::Disconnected;
+			return Socket::Status::Disconnected;
 		}
-		return Socket::getErrorStatus();
+		return getErrorStatus();
 	}
 	Socket::Status TCPClient::receive(Http& http) {
 		u64 r = 0;
@@ -158,18 +157,18 @@ namespace velo::net {
 		eastl::string bin;
 		Socket::Status status = Socket::Done;
 		i32 chances = 0;
-		TCPClient::setBlocking(false);
+		setBlocking(false);
 		do {
 
 			if (chances == 10) {
 				//bad client. disconnect!
-				TCPClient::close();
+				close();
 				return Socket::Disconnected;
 			}
-			status = TCPClient::receive(buffer, 128, r);
-			
+			status = receive(buffer, 128, r);
+
 			if (status == Socket::NotReady) {
-				TCPClient::wait(10);
+				wait(10);
 				chances++;
 				continue;
 			}
@@ -181,7 +180,7 @@ namespace velo::net {
 			bin.append(buffer, 128);
 			amountReceived += r;
 		} while (r == 128 || r == (~0));
-		TCPClient::setBlocking(true);
+		setBlocking(true);
 		eastl_size_t headerEnd = bin.find("\r\n\r\n");
 
 		if (headerEnd == eastl::string::npos) {
@@ -223,4 +222,3 @@ namespace velo::net {
 		return status;
 	}
 }
-

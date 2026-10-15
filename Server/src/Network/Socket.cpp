@@ -3,9 +3,9 @@
 
 #if defined(VELO_PLATFORM_WINDOWS)
 
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <Windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 
 #pragma comment(lib, "WS2_32.lib")
 
@@ -83,7 +83,7 @@ namespace velo::net {
 	}
 	Socket::Socket() : qwSocket(Socket::Invalid), bIsBlocking(true) {}
 
-	Socket::~Socket() { Socket::close(); }
+	Socket::~Socket() { close(); }
 
 	Socket::Socket(Socket&& other) noexcept {
 		Socket::qwSocket = other.qwSocket;
@@ -95,7 +95,7 @@ namespace velo::net {
 
 	Socket& Socket::operator=(Socket&& other) noexcept {
 		if (this != &other) {
-			Socket::close();
+			close();
 			Socket::qwSocket = other.qwSocket;
 			Socket::bIsBlocking = other.bIsBlocking;
 			other.qwSocket = Socket::Invalid;
@@ -137,7 +137,7 @@ namespace velo::net {
 #if defined(VELO_PLATFORM_WINDOWS)
 			closesocket(static_cast<SOCKET>(Socket::qwSocket));
 #else
-			close(static_cast<SOCKET>(Socket::qwSocket));
+			::close(static_cast<int>(Socket::qwSocket));
 #endif
 			Socket::qwSocket = Socket::Invalid;
 		}
@@ -149,7 +149,7 @@ namespace velo::net {
 			if (handle == Socket::Invalid) {
 				return;
 			}
-			Socket::create(handle);
+			create(handle);
 		}
 	}
 
@@ -167,7 +167,11 @@ namespace velo::net {
 		timeout.tv_usec = (duration % 1000) * 1000;
 
 		const int result = ::select(
+#if defined(VELO_PLATFORM_UNIX)
+			static_cast<int>(qwSocket) + 1,
+#else
 			0,
+#endif
 			&readSet,
 			nullptr,
 			nullptr,
@@ -180,7 +184,7 @@ namespace velo::net {
 	void Socket::create(Qword handle) {
 		if (Socket::qwSocket == Socket::Invalid) {
 			Socket::qwSocket = handle;
-			Socket::setBlocking(Socket::isBlocking());
+			setBlocking(isBlocking());
 
 			Dword yes = 1;
 			if (setsockopt(Socket::qwSocket, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&yes), sizeof(yes)) == -1) {
