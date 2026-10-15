@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>VELO Dashboard</title>
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+		  rel="stylesheet">
+
+	<style>
+		:root {
+			--velo-blue: #0066ff;
+			--velo-dark: #071a35;
+			--velo-light: #eef5ff;
+			--velo-text: #182b49;
+			--velo-muted: #7b8ba5;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: Arial, Helvetica, sans-serif;
+			color: var(--velo-text);
+			background: linear-gradient(135deg, #f7faff, #e8f1ff);
+		}
+
+		.sidebar {
+			position: fixed;
+			top: 0;
+			left: 0;
+			bottom: 0;
+			width: 250px;
+			padding: 30px 20px;
+			color: #ffffff;
+			background: linear-gradient(180deg, #071a35, #103c78);
+			box-shadow: 5px 0 25px rgba(0, 30, 80, 0.08);
+			z-index: 100;
+		}
+
+		.brand {
+			margin-bottom: 45px;
+			font-size: 32px;
+			font-weight: 900;
+			letter-spacing: 5px;
+		}
+
+			.brand span {
+				color: #4c9aff;
+			}
+
+		.sidebar-label {
+			margin: 25px 0 12px;
+			color: #91a9cb;
+			font-size: 11px;
+			font-weight: bold;
+			letter-spacing: 2px;
+			text-transform: uppercase;
+		}
+
+		.nav-link {
+			display: block;
+			margin-bottom: 8px;
+			padding: 13px 15px;
+			border-radius: 12px;
+			color: #c7d7ef;
+			text-decoration: none;
+			transition: 0.2s ease;
+		}
+
+			.nav-link:hover,
+			.nav-link.active {
+				color: #ffffff;
+				background: rgba(65, 145, 255, 0.2);
+				transform: translateX(4px);
+			}
+
+		.nav-icon {
+			display: inline-block;
+			width: 28px;
+			font-weight: bold;
+		}
+
+		.sidebar-footer {
+			position: absolute;
+			right: 20px;
+			bottom: 25px;
+			left: 20px;
+			padding: 15px;
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			border-radius: 12px;
+			color: #b8c9e3;
+			font-size: 12px;
+		}
+
+		.main-content {
+			margin-left: 250px;
+			padding: 35px;
+		}
+
+		.topbar {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 20px;
+			margin-bottom: 35px;
+		}
+
+		.page-title {
+			margin: 0;
+			font-size: 30px;
+			font-weight: 800;
+		}
+
+		.page-subtitle {
+			margin-top: 6px;
+			color: var(--velo-muted);
+		}
+
+		.profile {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 10px 16px;
+			border: 1px solid #e2eaf7;
+			border-radius: 14px;
+			background: #ffffff;
+			box-shadow: 0 5px 20px rgba(30, 70, 130, 0.04);
+		}
+
+		.profile-avatar {
+			display: flex;
+			width: 42px;
+			height: 42px;
+			align-items: center;
+			justify-content: center;
+			border-radius: 12px;
+			color: #ffffff;
+			background: linear-gradient(135deg, #0066ff, #65a7ff);
+			font-weight: bold;
+		}
+
+		.profile-name {
+			font-size: 14px;
+			font-weight: bold;
+		}
+
+		.profile-role {
+			color: var(--velo-muted);
+			font-size: 12px;
+		}
+
+		.welcome-card {
+			position: relative;
+			overflow: hidden;
+			margin-bottom: 30px;
+			padding: 35px;
+			border-radius: 24px;
+			color: #ffffff;
+			background: linear-gradient(115deg, #0755d9, #168bff);
+			box-shadow: 0 15px 35px rgba(0, 102, 255, 0.2);
+		}
+
+			.welcome-card::after {
+				position: absolute;
+				top: -100px;
+				right: -50px;
+				width: 300px;
+				height: 300px;
+				border: 45px solid rgba(255, 255, 255, 0.08);
+				border-radius: 50%;
+				content: "";
+			}
+
+			.welcome-card h2 {
+				position: relative;
+				z-index: 1;
+				font-size: 28px;
+				font-weight: 800;
+			}
+
+			.welcome-card p {
+				position: relative;
+				z-index: 1;
+				max-width: 550px;
+				margin-top: 12px;
+				color: #dceaff;
+			}
+
+		.welcome-badge {
+			position: relative;
+			z-index: 1;
+			display: inline-block;
+			margin-top: 10px;
+			padding: 8px 14px;
+			border: 1px solid rgba(255, 255, 255, 0.3);
+			border-radius: 30px;
+			background: rgba(255, 255, 255, 0.12);
+			font-size: 12px;
+			font-weight: bold;
+			letter-spacing: 1px;
+		}
+
+		.section-title {
+			margin: 30px 0 18px;
+			font-size: 19px;
+			font-weight: 800;
+		}
+
+		.stat-card {
+			height: 100%;
+			padding: 24px;
+			border: 1px solid #e5ecf7;
+			border-radius: 20px;
+			background: #ffffff;
+			box-shadow: 0 8px 25px rgba(30, 70, 130, 0.04);
+			transition: transform 0.2s ease, box-shadow 0.2s ease;
+		}
+
+			.stat-card:hover {
+				transform: translateY(-5px);
+				box-shadow: 0 15px 30px rgba(30, 70, 130, 0.1);
+			}
+
+		.stat-icon {
+			display: flex;
+			width: 48px;
+			height: 48px;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: 20px;
+			border-radius: 14px;
+			color: var(--velo-blue);
+			background: #eaf2ff;
+			font-size: 14px;
+			font-weight: 900;
+		}
+
+		.stat-label {
+			color: var(--velo-muted);
+			font-size: 13px;
+		}
+
+		.stat-value {
+			margin: 8px 0;
+			font-size: 30px;
+			font-weight: 800;
+		}
+
+		.stat-change {
+			color: #16885b;
+			font-size: 12px;
+			font-weight: bold;
+		}
+
+		.panel {
+			height: 100%;
+			padding: 25px;
+			border: 1px solid #e5ecf7;
+			border-radius: 20px;
+			background: #ffffff;
+			box-shadow: 0 8px 25px rgba(30, 70, 130, 0.04);
+		}
+
+		.panel-title {
+			margin-bottom: 22px;
+			font-size: 17px;
+			font-weight: 800;
+		}
+
+		.activity-item {
+			display: flex;
+			align-items: flex-start;
+			gap: 14px;
+			padding: 15px 0;
+			border-bottom: 1px solid #edf1f8;
+		}
+
+			.activity-item:last-child {
+				border-bottom: none;
+			}
+
+		.activity-dot {
+			flex-shrink: 0;
+			width: 10px;
+			height: 10px;
+			margin-top: 5px;
+			border-radius: 50%;
+			background: var(--velo-blue);
+			box-shadow: 0 0 0 5px #eaf2ff;
+		}
+
+		.activity-title {
+			font-size: 13px;
+			font-weight: bold;
+		}
+
+		.activity-time {
+			margin-top: 4px;
+			color: var(--velo-muted);
+			font-size: 12px;
+		}
+
+		.status-badge {
+			display: inline-block;
+			padding: 6px 10px;
+			border-radius: 20px;
+			color: #16885b;
+			background: #e5f8ef;
+			font-size: 11px;
+			font-weight: bold;
+		}
+
+		.server-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 15px;
+			margin-bottom: 20px;
+		}
+
+		.server-name {
+			font-size: 13px;
+			font-weight: bold;
+		}
+
+		.server-detail {
+			margin-top: 4px;
+			color: var(--velo-muted);
+			font-size: 12px;
+		}
+
+		.progress {
+			height: 7px;
+			margin-top: 10px;
+			border-radius: 10px;
+			background: #edf2fa;
+		}
+
+		.progress-bar {
+			border-radius: 10px;
+			background: linear-gradient(90deg, #0066ff, #69aaff);
+		}
+
+		.footer {
+			display: flex;
+			justify-content: space-between;
+			gap: 15px;
+			margin-top: 35px;
+			padding-top: 20px;
+			border-top: 1px solid #dfe8f5;
+			color: var(--velo-muted);
+			font-size: 12px;
+		}
+
+			.footer a {
+				color: var(--velo-blue);
+				text-decoration: none;
+			}
+
+				.footer a:hover {
+					text-decoration: underline;
+				}
+
+		@media (max-width: 991px) {
+			.sidebar {
+				position: relative;
+				width: 100%;
+				padding: 20px;
+			}
+
+			.brand {
+				margin-bottom: 20px;
+			}
+
+			.sidebar-footer {
+				display: none;
+			}
+
+			.main-content {
+				margin-left: 0;
+				padding: 25px;
+			}
+
+			.topbar {
+				align-items: flex-start;
+				flex-direction: column;
+			}
+		}
+
+		@media (max-width: 576px) {
+			.main-content {
+				padding: 18px;
+			}
+
+			.welcome-card {
+				padding: 25px;
+			}
+
+			.page-title {
+				font-size: 25px;
+			}
+
+			.footer {
+				flex-direction: column;
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<aside class="sidebar">
+		<div class="brand">VEL<span>O</span></div>
+
+		<div class="sidebar-label">Main Menu</div>
+
+		<a href="#" class="nav-link active">
+			<span class="nav-icon">DB</span> Dashboard
+		</a>
+
+		<a href="#" class="nav-link">
+			<span class="nav-icon">SV</span> Servers
+		</a>
+
+		<a href="#" class="nav-link">
+			<span class="nav-icon">PL</span> Players
+		</a>
+
+		<a href="#" class="nav-link">
+			<span class="nav-icon">LG</span> Logs
+		</a>
+
+		<div class="sidebar-label">Management</div>
+
+		<a href="#" class="nav-link">
+			<span class="nav-icon">ST</span> Settings
+		</a>
+
+		<a href="/" class="nav-link">
+			<span class="nav-icon">AC</span> Account
+		</a>
+
+		<div class="sidebar-footer">
+			<strong>VELO SERVER</strong>
+			<br>
+			Control panel version 1.0
+			<br>
+			<span class="status-badge mt-2">SYSTEM ONLINE</span>
+		</div>
+	</aside>
+
+	<main class="main-content">
+
+		<header class="topbar">
+			<div>
+				<h1 class="page-title">Dashboard</h1>
+				<p class="page-subtitle">
+					Welcome back. Here is your server overview.
+				</p>
+			</div>
+
+			<div class="profile">
+				<div class="profile-avatar">AD</div>
+				<div>
+					<div class="profile-name">Administrator</div>
+					<div class="profile-role">Server Manager</div>
+				</div>
+			</div>
+		</header>
+
+		<section class="welcome-card">
+			<h2>Welcome to VELO</h2>
+
+			<p>
+				Manage your game server, monitor player activity,
+				and keep track of system performance from one place.
+			</p>
+
+			<span class="welcome-badge">CONTROL PANEL ACTIVE</span>
+		</section>
+
+		<h2 class="section-title">Server Overview</h2>
+
+		<div class="row g-4">
+
+			<div class="col-sm-6 col-xl-3">
+				<div class="stat-card">
+					<div class="stat-icon">SV</div>
+					<div class="stat-label">Active Servers</div>
+					<div class="stat-value">4</div>
+					<div class="stat-change">All systems operational</div>
+				</div>
+			</div>
+
+			<div class="col-sm-6 col-xl-3">
+				<div class="stat-card">
+					<div class="stat-icon">PL</div>
+					<div class="stat-label">Online Players</div>
+					<div class="stat-value">128</div>
+					<div class="stat-change">Across all servers</div>
+				</div>
+			</div>
+
+			<div class="col-sm-6 col-xl-3">
+				<div class="stat-card">
+					<div class="stat-icon">CP</div>
+					<div class="stat-label">CPU Usage</div>
+					<div class="stat-value">24%</div>
+					<div class="stat-change">Within normal limits</div>
+				</div>
+			</div>
+
+			<div class="col-sm-6 col-xl-3">
+				<div class="stat-card">
+					<div class="stat-icon">UP</div>
+					<div class="stat-label">Server Uptime</div>
+					<div class="stat-value">99.9%</div>
+					<div class="stat-change">Last 30 days</div>
+				</div>
+			</div>
+
+		</div>
+
+		<h2 class="section-title">System Details</h2>
+
+		<div class="row g-4">
+
+			<div class="col-lg-7">
+				<section class="panel">
+					<h3 class="panel-title">Recent Activity</h3>
+
+					<div class="activity-item">
+						<div class="activity-dot"></div>
+						<div>
+							<div class="activity-title">
+								Server started successfully
+							</div>
+							<div class="activity-time">
+								2 minutes ago
+							</div>
+						</div>
+					</div>
+
+					<div class="activity-item">
+						<div class="activity-dot"></div>
+						<div>
+							<div class="activity-title">
+								New player connected
+							</div>
+							<div class="activity-time">
+								5 minutes ago
+							</div>
+						</div>
+					</div>
+
+					<div class="activity-item">
+						<div class="activity-dot"></div>
+						<div>
+							<div class="activity-title">
+								Server configuration loaded
+							</div>
+							<div class="activity-time">
+								12 minutes ago
+							</div>
+						</div>
+					</div>
+
+					<div class="activity-item">
+						<div class="activity-dot"></div>
+						<div>
+							<div class="activity-title">
+								Database connection established
+							</div>
+							<div class="activity-time">
+								15 minutes ago
+							</div>
+						</div>
+					</div>
+				</section>
+			</div>
+
+			<div class="col-lg-5">
+				<section class="panel">
+					<h3 class="panel-title">Resource Usage</h3>
+
+					<div class="server-row">
+						<div class="w-100">
+							<div class="d-flex justify-content-between">
+								<span class="server-name">CPU Usage</span>
+								<span class="server-detail">24%</span>
+							</div>
+
+							<div class="progress">
+								<div class="progress-bar"
+									 role="progressbar"
+									 style="width: 24%"
+									 aria-valuenow="24"
+									 aria-valuemin="0"
+									 aria-valuemax="100"></div>
+							</div>
+						</div>
+					</div>
+
+					<div class="server-row">
+						<div class="w-100">
+							<div class="d-flex justify-content-between">
+								<span class="server-name">Memory Usage</span>
+								<span class="server-detail">58%</span>
+							</div>
+
+							<div class="progress">
+								<div class="progress-bar"
+									 role="progressbar"
+									 style="width: 58%"
+									 aria-valuenow="58"
+									 aria-valuemin="0"
+									 aria-valuemax="100"></div>
+							</div>
+						</div>
+					</div>
+
+					<div class="server-row">
+						<div class="w-100">
+							<div class="d-flex justify-content-between">
+								<span class="server-name">Storage Usage</span>
+								<span class="server-detail">41%</span>
+							</div>
+
+							<div class="progress">
+								<div class="progress-bar"
+									 role="progressbar"
+									 style="width: 41%"
+									 aria-valuenow="41"
+									 aria-valuemin="0"
+									 aria-valuemax="100"></div>
+							</div>
+						</div>
+					</div>
+
+					<hr>
+
+					<div class="d-flex justify-content-between align-items-center">
+						<span class="server-name">Server Status</span>
+						<span class="status-badge">ONLINE</span>
+					</div>
+				</section>
+			</div>
+
+		</div>
+
+		<footer class="footer">
+			<div>
+				Copyright 2026 VELO. All rights reserved.
+			</div>
+
+			<div>
+				<a href="#">Documentation</a>
+				&nbsp; | &nbsp;
+				<a href="#">Support</a>
+				&nbsp; | &nbsp;
+				<a href="#">Privacy</a>
+			</div>
+		</footer>
+
+	</main>
+
+</body>
+</html>
