@@ -54,5 +54,5 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: velo
-        path: ${{steps.strings.outputs.build-output-dir}}
+        name: ${{matrix.os}}-${{matrix.c_compiler}}
+        path: ${{steps.strings.outputs.build-output-dir}}/bin
