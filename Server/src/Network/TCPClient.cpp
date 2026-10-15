@@ -105,11 +105,10 @@ namespace velo::net {
 
 	Socket::Status TCPClient::send(const Http& http) {
 		eastl::string res;
-		res.append_sprintf("%s %d %s\r\n", http.version, http.n16ResponseCode, http.respMsg);
-
-		for (const auto& [name, value] : http.fields) {
-			res.append_sprintf("%s: %s\r\n", name, value);
-		}
+		res.append_sprintf("%s %d %s\r\n", http.version.c_str(), http.n16ResponseCode, http.respMsg.c_str());
+        for (const auto& [name, value] : http.fields) {
+            res.append_sprintf("%s: %s\r\n", name.c_str(), value.c_str());
+        }
 		res.append("\r\n");
 
 		res.append(http.body);
