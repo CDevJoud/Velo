@@ -1,8 +1,6 @@
 ﻿#include "Services/WebServer/WebServer.hpp"
+#include "Platform.hpp"
 #include "util.hpp"
-
-//just for testing
-#include <Windows.h>
 
 using velo::core::Intrusive;
 using velo::core::QEventChannels;
@@ -11,24 +9,37 @@ using velo::net::TCPServer;
 using velo::net::Socket;
 using velo::net::Http;
 
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 namespace velo::services {
 
 	char* loadFile(const char* name) {
-		HANDLE hFile = CreateFileA(name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+		FILE* file = fopen(name, "rb");
 
-		if (hFile == INVALID_HANDLE_VALUE) {
+		if (file == nullptr) {
 			return nullptr;
 		}
 
-		size_t size;
-		GetFileSizeEx(hFile, (PLARGE_INTEGER)&size);
+		fseek(file, 0, SEEK_END);
+		const long size = ftell(file);
+		fseek(file, 0, SEEK_SET);
 
-		char* buffer = (char*)malloc(size);
+		if (size <= 0) {
+			fclose(file);
+			return nullptr;
+		}
 
-		DWORD r;
-		ReadFile(hFile, buffer, size, &r, 0);
-		CloseHandle(hFile);
+		char* buffer = (char*)malloc(static_cast<size_t>(size) + 1);
+
+		if (buffer == nullptr) {
+			fclose(file);
+			return nullptr;
+		}
+
+		const size_t read = fread(buffer, 1, static_cast<size_t>(size), file);
+		buffer[read] = '\0';
+		fclose(file);
 		return buffer;
 	}
 
@@ -86,7 +97,7 @@ namespace velo::services {
 	}
 
 	bool WebServer::instantiateService() {
-		bIsServiceRunning = (WebServer::tcpServer->listen(8080, "192.168.50.45") != Socket::Status::Error);
+		bIsServiceRunning = (WebServer::tcpServer->listen(8080, "0.0.0.0") != Socket::Status::Error);
 		return bIsServiceRunning;
 	}
 
@@ -127,22 +138,21 @@ namespace velo::services {
 					return;
 				}
 			}
-			eastl::vector<i8>;
 			Http req;
 			client.receive(req);
-			Sleep(1000);
+			platform::sleepMs(1000);
 			if (req.getURL() == "/") {
 				Http resp;
 				resp.setVersion("HTTP/1.1");
 				resp.setResponseCode(200, "OK!");
-				resp.setBody(index_html);
+				resp.setBody(index_html ? index_html : "");
 				client.send(resp);
 			}
 			else {
 				Http resp;
 				resp.setVersion("HTTP/1.1");
 				resp.setResponseCode(404, "NOT FOUND!");
-				resp.setBody(dashboard_html);
+				resp.setBody(dashboard_html ? dashboard_html : "");
 				client.send(resp);
 			}
 

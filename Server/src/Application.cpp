@@ -1,6 +1,6 @@
 #include "Application.hpp"
+#include "Platform.hpp"
 #include <EASTL/fixed_vector.h>
-#include <Windows.h>
 
 //@todo implement logging system on TCPClient
 
@@ -23,10 +23,10 @@ namespace velo {
 
 		while (1) {
 
-			if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
+			if (platform::keyPressed(platform::KeyEscape) || platform::stopRequested()) {
 				break;
 			}
-			Sleep(1);
+			platform::sleepMs(1);
 		}
 
 		qc.qBus.post(event::services::Signal());

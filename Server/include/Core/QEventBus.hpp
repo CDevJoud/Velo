@@ -1,5 +1,8 @@
 #pragma once
 #include <mutex>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
 #include <typeindex>
 
 #include <EASTL/functional.h>

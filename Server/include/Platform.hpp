@@ -1,5 +1,7 @@
 #pragma once
 
+#include "typedefs.hpp"
+
 #if defined(_WIN32)
 
     #if !defined(_WIN64)
@@ -9,9 +11,14 @@
     #define VELO_PLATFORM_WINDOWS 1
     #define VELO_PLATFORM_NAME "windows"
 
-#elif defined(__APPLE__) && defined(__MACH__) || defined(__linux__)
+#elif defined(__APPLE__) && defined(__MACH__)
 
     #include <TargetConditionals.h>
+
+    #define VELO_PLATFORM_UNIX 1
+	#define VELO_PLATFORM_NAME "unix"
+
+#elif defined(__linux__)
 
     #define VELO_PLATFORM_UNIX 1
 	#define VELO_PLATFORM_NAME "unix"
@@ -70,3 +77,17 @@
     #define VELO_BUILD_DEBUG 1
 
 #endif
+
+namespace velo::platform {
+#if defined(VELO_PLATFORM_WINDOWS)
+	using socklen_type = int;
+#else
+	using socklen_type = unsigned int;
+#endif
+
+	constexpr i32 KeyEscape = 27;
+
+	void sleepMs(u32 ms);
+	bool keyPressed(i32 key);
+	bool stopRequested();
+}

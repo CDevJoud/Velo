@@ -8,9 +8,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <Windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 
 #pragma comment(lib, "WS2_32.lib")
 
@@ -45,6 +45,10 @@ namespace velo::net {
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(port);
 		addr.sin_addr.s_addr = inet_addr(ipAddress);
+#if defined(VELO_PLATFORM_UNIX)
+		const int reuse = 1;
+		setsockopt(Socket::getNativeHandle(), SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+#endif
 		if (::bind(Socket::getNativeHandle(), (sockaddr*)&addr, sizeof(addr)) == -1) {
 			return Error;
 		}
@@ -54,6 +58,11 @@ namespace velo::net {
 		return Done;
 	}
 	void TCPServer::stop() {
+#if defined(VELO_PLATFORM_UNIX)
+		if (Socket::getNativeHandle() != Socket::Invalid) {
+			::shutdown(static_cast<int>(Socket::getNativeHandle()), SHUT_RDWR);
+		}
+#endif
 		Socket::close();
 	}
 	Socket::Status TCPServer::accept(TCPClient& client) {
@@ -61,8 +70,8 @@ namespace velo::net {
 			return Error;
 		}
 		struct sockaddr_in addr {};
-		i32 len = sizeof(addr);
-		const Qword remote = ::accept(Socket::getNativeHandle(), (sockaddr*)&addr, (int*)&len);
+		platform::socklen_type len = sizeof(addr);
+		const Qword remote = ::accept(Socket::getNativeHandle(), (sockaddr*)&addr, &len);
 		if (remote == Socket::Invalid) {
 			return Socket::getErrorStatus();
 		}
